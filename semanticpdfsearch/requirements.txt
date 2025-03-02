@@ -6,3 +6,4 @@ pandas
 PyPDF2
 python-docx
 nltk
+sentence_transformers
