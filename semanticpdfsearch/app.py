@@ -125,17 +125,10 @@ def get_embedding(text):
     return response.data[0].embedding
 
 def main():
-    # Create two columns for title and logo
-    col1, col2 = st.columns([4, 1])  # Adjust ratio between title and logo
+    # Add logo above title
+    st.image("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/logo_sm.png", width=100)
     
-    # Title in the first (wider) column
-    with col1:
-        st.title("Semantic Text Embedding Generation & Search Tool")
-    
-    # Logo in the second (narrower) column
-    with col2:
-        st.image("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/logo_sm.png", width=100)
-    
+    st.title("Semantic Text Embedding Generation & Search Tool")
     st.write("Upload your documents, generate embeddings, and search for relevant content!<br>*No files are saved upon exiting this page*")
 
     if "OPENAI_API_KEY" not in st.secrets:
