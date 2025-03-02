@@ -54,6 +54,12 @@ from nltk.tokenize import sent_tokenize
 st.markdown(
     """
     <style>
+    .stApp {
+        background-image: url('https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/black_bg.jpg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
     
     /* Style sidebar */
     .css-1d391kg, [data-testid="stSidebar"] {
