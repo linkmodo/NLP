@@ -8,7 +8,11 @@ from openai import OpenAI
 import nltk
 
 # Set the page configuration with the new title.
-st.set_page_config(page_title="Semantic Text Embedding Generation And Search Tool")
+st.set_page_config(
+    page_title="Semantic Text Embedding Generation And Search Tool - By Li Fan",
+    layout="wide",  # This sets the default layout to wide mode
+    initial_sidebar_state="expanded"  # This ensures sidebar is expanded by default
+)
 
 # Set up OpenAI client with API key from Streamlit secrets.
 client = OpenAI(
@@ -130,8 +134,8 @@ def get_embedding(text):
     return response.data[0].embedding
 
 def main():
-    st.title("Semantic Text Embedding Generation And Search Tool")
-    st.write("Upload your documents, generate embeddings, and search for relevant content.")
+    st.title("Semantic Text Embedding Generation & Search Tool")
+    st.write("Upload your documents, generate embeddings, and search for relevant content!")
 
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
@@ -224,6 +228,15 @@ def main():
                     df = pd.DataFrame(results)
                     csv_data = df.to_csv(index=False)
                     st.download_button("Download CSV", data=csv_data, file_name="search_results.csv", mime="text/csv")
+    # ---------------------
+    # Footer
+    # ---------------------
+    st.markdown("""
+    <hr>
+    <p style="text-align: center; color: gray;">
+    Build by Li Fan | Powered by OpenCV & Streamlit
+    </p>
+    """, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
