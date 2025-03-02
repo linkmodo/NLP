@@ -1,10 +1,8 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
 import PyPDF2
 import docx
-import io
 import json
 from openai import OpenAI
 import nltk
@@ -14,19 +12,13 @@ headers = {
 }
 
 client = OpenAI(
-  api_key=st.secrets["OPENAI_API_KEY"], # Masked OpenAI API Key
+  api_key=st.secrets["OPENAI_API_KEY"],  # this is also the default, it can be omitted
 )
 
-# Download necessary NLTK resources.
-for resource in ['punkt', 'punkt_tab']:
-    try:
-        nltk.data.find(f'tokenizers/{resource}')
-    except LookupError:
-        nltk.download(resource)
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+# Download necessary NLTK resources
+nltk.download('punkt', quiet=True)
+nltk.download('stopwords', quiet=True)
+nltk.download('averaged_perceptron_tagger', quiet=True)
 
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
@@ -98,13 +90,13 @@ def cosine_similarity(a, b):
 def get_embedding(text):
     """
     Generate an embedding for the provided text using OpenAI's API.
-    Using the text-embedding-ada-002 model.
+    Using the text-embedding-3-small model.
     """
-    response = openai.Embedding.create(
+    response = client.embeddings.create(
         input=[text],
-        model="text-embedding-ada-002"
+        model="text-embedding-3-small"
     )
-    return response["data"][0]["embedding"]
+    return response.data[0].embedding
 
 def main():
     st.title("Semantic Search Engine for Uploaded Files")
@@ -114,7 +106,6 @@ def main():
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
         return
-    openai.api_key = st.secrets["OPENAI_API_KEY"]
 
     st.sidebar.header("Options")
     uploaded_files = st.sidebar.file_uploader(
