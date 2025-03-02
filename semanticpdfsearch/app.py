@@ -7,6 +7,9 @@ import json
 from openai import OpenAI
 import nltk
 
+# Set the page configuration with the new title.
+st.set_page_config(page_title="Semantic Text Embedding Generation And Search Tool")
+
 # Set up OpenAI client with API key from Streamlit secrets.
 client = OpenAI(
   api_key=st.secrets["OPENAI_API_KEY"],
@@ -20,17 +23,27 @@ except Exception as e:
 
 from nltk.tokenize import sent_tokenize
 
-# Inject custom CSS for a white background and legible text.
+# Inject custom CSS for a white background, a background image, and legible text.
 st.markdown(
     """
     <style>
     body {
-        background-color: white;
-        color: black;
+        background-image: url('https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/white_bg.jpg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: #333333;
+        font-family: "Helvetica", "Arial", sans-serif;
     }
     .stButton>button {
         background-color: #f0f0f0;
-        color: black;
+        color: #333333;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    .stTextInput>div>div>input {
+        color: #333333;
     }
     </style>
     """,
@@ -80,10 +93,9 @@ def get_embedding(text):
     return response.data[0].embedding
 
 def main():
-    st.title("Semantic Search Engine for Uploaded Files")
+    st.title("Semantic Text Embedding Generation And Search Tool")
     st.write("Upload your documents, generate embeddings, and search for relevant content.")
 
-    # Check for OpenAI API key.
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
         return
@@ -106,9 +118,7 @@ def main():
                 st.write(f"Processing file: {file.name}")
                 text = extract_text(file)
                 if text:
-                    # Generate full document embedding.
                     doc_embedding = get_embedding(text)
-                    # Split text into sentences and (optionally) generate a single combined embedding.
                     sentences = split_text_into_sentences(text)
                     if sentences:
                         sentence_embeddings = get_embedding(" ".join(sentences))
@@ -119,22 +129,19 @@ def main():
                         "text": text,
                         "embedding": doc_embedding,
                         "sentences": sentences,
-                        "sentence_embeddings": sentence_embeddings  # One embedding per file for simplicity.
+                        "sentence_embeddings": sentence_embeddings
                     })
         st.success("Files processed and embeddings computed!")
         
-        # Option to download the embeddings dataset as JSON.
         if st.button("Download Embeddings Dataset JSON"):
             embeddings_json = json.dumps(embeddings_data)
             st.download_button("Download Embeddings", data=embeddings_json, file_name="embeddings.json", mime="application/json")
 
-    # Search functionality.
     query = st.text_input("Enter your search query")
     if query and embeddings_data:
         with st.spinner("Generating query embedding and searching..."):
             query_embedding = get_embedding(query)
             if sentence_search:
-                # Sentence-level search.
                 sentence_results = []
                 for data in embeddings_data:
                     for sentence in data["sentences"]:
@@ -159,7 +166,6 @@ def main():
                     csv_data = df.to_csv(index=False)
                     st.download_button("Download CSV", data=csv_data, file_name="sentence_search_results.csv", mime="text/csv")
             else:
-                # Document-level search.
                 results = []
                 for data in embeddings_data:
                     score = cosine_similarity(query_embedding, np.array(data["embedding"]))
