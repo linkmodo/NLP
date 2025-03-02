@@ -126,7 +126,7 @@ def get_embedding(text):
 
 def main():
     st.title("Semantic Text Embedding Generation & Search Tool")
-    st.write("Upload your documents, generate embeddings, and search for relevant content!")
+    st.write("Upload your documents, generate embeddings, and search for relevant content!<br>*No files are saved upon exiting this page*")
 
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
