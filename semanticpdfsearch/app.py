@@ -1,10 +1,10 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
 import PyPDF2
 import docx
 import json
+import openai
 from sklearn.neighbors import NearestNeighbors
 
 def extract_text(file):
@@ -31,55 +31,66 @@ def extract_text(file):
         st.warning(f"Unsupported file type: {file_type}")
     return text
 
-def main():
-    st.title("Semantic Search Engine for Uploaded Files (k-NN)")
-    st.write("Upload your documents below and ask questions to search for relevant content.")
+def get_embedding(text):
+    """
+    Call the OpenAI API to generate embeddings using the text-embedding-3-small model.
+    Note: Wrap the text in a list and extract the embedding from the response.
+    """
+    response = openai.Embedding.create(
+        input=[text],
+        model="text-embedding-3-small"
+    )
+    return response["data"][0]["embedding"]
 
-    # Sidebar options
-    st.sidebar.header("Options")
+def main():
+    st.title("Semantic Search Engine for Uploaded Files (OpenAI Embeddings)")
+    st.write("Upload your documents and ask questions to search for relevant content using OpenAI embeddings.")
     
-    # File uploader (accepting multiple files)
+    # Securely load the OpenAI API key from Streamlit secrets.
+    if "OPENAI_API_KEY" not in st.secrets:
+        st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
+        return
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
+    
+    # Sidebar for file uploads.
+    st.sidebar.header("Options")
     uploaded_files = st.file_uploader(
-        "Upload your documents",
-        type=["pdf", "docx", "txt", "csv"],
+        "Upload your documents", 
+        type=["pdf", "docx", "txt", "csv"], 
         accept_multiple_files=True
     )
     
     if uploaded_files:
-        # Load the embedding model
-        with st.spinner("Loading embedding model..."):
-            model = SentenceTransformer("all-MiniLM-L6-v2")
-        
-        # Process uploaded files and compute embeddings
         embeddings_data = []
         for file in uploaded_files:
             st.write(f"Processing file: {file.name}")
             text = extract_text(file)
             if text:
-                embedding = model.encode(text)
+                embedding = get_embedding(text)
                 embeddings_data.append({
                     "file_name": file.name,
                     "text": text,
-                    "embedding": embedding.tolist()  # Convert to list for JSON serialization
+                    "embedding": embedding
                 })
         st.success("Files processed and embeddings computed!")
         
-        # Option to save embeddings for future use
+        # Option to download embeddings for future use.
         if st.button("Download Embeddings JSON"):
             embeddings_json = json.dumps(embeddings_data)
             st.download_button("Download Embeddings", data=embeddings_json, file_name="embeddings.json", mime="application/json")
         
-        # Search functionality using k-NN
+        # Search functionality using k‑Nearest Neighbors.
         query = st.text_input("Enter your search query")
         if query:
-            query_embedding = model.encode(query)
+            query_embedding = get_embedding(query)
             embeddings_matrix = np.array([data["embedding"] for data in embeddings_data])
             
-            # Allow the user to choose the number of nearest neighbors (k)
-            k = st.slider("Select number of nearest neighbors (k)", min_value=1, 
-                          max_value=min(len(embeddings_data), 10), value=3)
+            # Allow user to choose number of nearest neighbors.
+            k = st.slider("Select number of nearest neighbors (k)", 
+                          min_value=1, 
+                          max_value=min(len(embeddings_data), 10), 
+                          value=3)
             
-            # Build and query the k-NN model using cosine distance
             knn = NearestNeighbors(n_neighbors=k, metric="cosine")
             knn.fit(embeddings_matrix)
             distances, indices = knn.kneighbors([query_embedding])
@@ -87,14 +98,13 @@ def main():
             st.write("### Search Results using k‑Nearest Neighbors")
             for i, idx in enumerate(indices[0]):
                 result = embeddings_data[idx]
-                # Convert cosine distance to similarity score: similarity = 1 - distance
-                similarity = 1 - distances[0][i]
+                similarity = 1 - distances[0][i]  # Convert cosine distance to similarity.
                 st.write(f"**File:** {result['file_name']}")
                 st.write(f"**Similarity Score:** {similarity:.4f}")
                 st.write(f"**Extract:** {result['text'][:500]}...")
                 st.write("---")
             
-            # Option to save search results as CSV
+            # Option to download search results as CSV.
             if st.button("Download Search Results as CSV"):
                 results_list = []
                 for i, idx in enumerate(indices[0]):
