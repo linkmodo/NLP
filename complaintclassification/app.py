@@ -10,7 +10,11 @@ from sklearn.model_selection import train_test_split
 import time
 import os
 from typing import List, Dict, Any
-from pinecone import Pinecone as pc, ServerlessSpec
+from pinecone import Pinecone, ServerlessSpec
+
+pc = Pinecone(
+    api_key=st.secrets["PINECONE_API_KEY"]
+)
 
 # Initialize session state
 if 'model_trained' not in st.session_state:
