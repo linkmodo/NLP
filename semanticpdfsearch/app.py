@@ -16,15 +16,23 @@ client = OpenAI(
 )
 
 # Download necessary NLTK resources
-nltk.download('punkt', quiet=True)
-nltk.download('stopwords', quiet=True)
-nltk.download('averaged_perceptron_tagger', quiet=True)
+try:
+    nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+    NLTK_RESOURCES_AVAILABLE = True
+except Exception as e:
+    st.warning("Some NLTK resources couldn't be downloaded. Tag generation will be disabled.")
+    NLTK_RESOURCES_AVAILABLE = False
 
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk import pos_tag
 
-stop_words = set(stopwords.words('english'))
+try:
+    stop_words = set(stopwords.words('english'))
+except:
+    stop_words = set()
 
 # Inject custom CSS for a white background and legible text.
 st.markdown(
@@ -75,13 +83,20 @@ def generate_tags(sentence):
     Generate candidate tags from a sentence by tokenizing,
     POS tagging, and filtering for nouns and adjectives.
     """
-    tokens = word_tokenize(sentence)
-    tagged_tokens = pos_tag(tokens)
-    # Choose nouns and adjectives that are not stopwords and longer than 2 characters.
-    candidate_tags = {token.lower() for token, tag in tagged_tokens 
-                      if tag.startswith("NN") or tag.startswith("JJ")
-                      if token.lower() not in stop_words and len(token) > 2}
-    return list(candidate_tags)
+    if not NLTK_RESOURCES_AVAILABLE:
+        return []
+    
+    try:
+        tokens = word_tokenize(sentence)
+        tagged_tokens = pos_tag(tokens)
+        # Choose nouns and adjectives that are not stopwords and longer than 2 characters.
+        candidate_tags = {token.lower() for token, tag in tagged_tokens 
+                        if tag.startswith("NN") or tag.startswith("JJ")
+                        if token.lower() not in stop_words and len(token) > 2}
+        return list(candidate_tags)
+    except Exception as e:
+        st.warning(f"Error generating tags: {str(e)}")
+        return []
 
 def cosine_similarity(a, b):
     """Calculate cosine similarity between two vectors."""
