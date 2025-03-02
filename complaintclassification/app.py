@@ -1,6 +1,5 @@
 import streamlit as st
 import openai
-import pinecone
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -12,10 +11,6 @@ import os
 from typing import List, Dict, Any
 from pinecone import Pinecone, ServerlessSpec
 
-pc = Pinecone(
-    api_key=st.secrets["PINECONE_API_KEY"]
-)
-
 # Initialize session state
 if 'model_trained' not in st.session_state:
     st.session_state.model_trained = False
@@ -23,9 +18,8 @@ if 'model_trained' not in st.session_state:
 # 🔹 Load API keys from Streamlit secrets
 try:
     openai.api_key = st.secrets["OPENAI_API_KEY"]
-    pinecone.init(
-        api_key=st.secrets["PINECONE_API_KEY"],
-    )
+    # Initialize Pinecone with the new SDK
+    pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
     st.stop()
@@ -36,9 +30,21 @@ index_name = "debt-complaints-index"
 @st.cache_resource
 def initialize_pinecone():
     try:
-        if index_name not in pinecone.list_indexes():
-            pinecone.create_index(name=index_name, dimension=1536, metric="cosine")
-        return pinecone.Index(index_name)
+        # List all indexes
+        indexes = pc.list_indexes()
+        index_names = [index.name for index in indexes]
+        
+        # Create index if it doesn't exist
+        if index_name not in index_names:
+            pc.create_index(
+                name=index_name,
+                dimension=1536,
+                metric="cosine",
+                spec=ServerlessSpec(cloud="aws", region="us-west-2")
+            )
+        
+        # Get the index
+        return pc.Index(index_name)
     except Exception as e:
         st.error(f"Error initializing Pinecone: {str(e)}")
         st.stop()
@@ -93,7 +99,10 @@ def generate_embeddings(df: pd.DataFrame):
         # Batch upload to Pinecone with error handling
         try:
             for i in range(0, len(vectors_to_upsert), 100):
-                index.upsert(vectors=vectors_to_upsert[i:i+100])
+                batch = vectors_to_upsert[i:i+100]
+                index.upsert(
+                    vectors=[(id_, vec, meta) for id_, vec, meta in batch]
+                )
         except Exception as e:
             st.error(f"Error uploading to Pinecone: {str(e)}")
             st.stop()
