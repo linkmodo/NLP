@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 import time
 import os
 from typing import List, Dict, Any
-from pinecone import Pinecone, ServerlessSpec
+from pinecone import Pinecone as pc, ServerlessSpec
 
 # Now do stuff
 if 'my_index' not in pc.list_indexes().names():
