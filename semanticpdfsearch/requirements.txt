@@ -1,10 +1,8 @@
 streamlit
-openai
-scikit-learn
 numpy
 pandas
+sentence-transformers
 PyPDF2
 python-docx
+openai
 nltk
-sentence_transformers
-Torch
