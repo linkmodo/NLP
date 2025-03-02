@@ -126,10 +126,10 @@ def get_embedding(text):
 
 def main():
     # Add logo above title
-    st.image("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/logo_sm.png", width=100)
+    st.image("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/logo_sm.png")
     
     st.title("Semantic Text Embedding Generation & Search Tool")
-    st.write("Upload your documents, generate embeddings, and search for relevant content!<br>*No files are saved upon exiting this page*")
+    st.write("Upload your documents, generate embeddings, and search for relevant content! **No files are saved upon exiting this page**")
 
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
