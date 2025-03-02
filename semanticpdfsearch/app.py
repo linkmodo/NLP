@@ -4,11 +4,11 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 import PyPDF2
 import docx
-import io
 import json
+from sklearn.neighbors import NearestNeighbors
 
 def extract_text(file):
-    """Extract text from different file types."""
+    """Extract text from various file types."""
     file_type = file.name.split('.')[-1].lower()
     text = ""
     if file_type == "pdf":
@@ -24,19 +24,15 @@ def extract_text(file):
     elif file_type == "txt":
         text = file.read().decode("utf-8")
     elif file_type == "csv":
-        # For CSV files, we read the file into a DataFrame and convert it to CSV string format.
+        # For CSV files, read into a DataFrame and convert to CSV string format.
         df = pd.read_csv(file)
         text = df.to_csv(index=False)
     else:
         st.warning(f"Unsupported file type: {file_type}")
     return text
 
-def cosine_similarity(a, b):
-    """Calculate cosine similarity between two vectors."""
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
 def main():
-    st.title("Semantic Search Engine for Uploaded Files")
+    st.title("Semantic Search Engine for Uploaded Files (k-NN)")
     st.write("Upload your documents below and ask questions to search for relevant content.")
 
     # Sidebar options
@@ -60,7 +56,6 @@ def main():
             st.write(f"Processing file: {file.name}")
             text = extract_text(file)
             if text:
-                # Compute embedding for the entire text
                 embedding = model.encode(text)
                 embeddings_data.append({
                     "file_name": file.name,
@@ -74,34 +69,43 @@ def main():
             embeddings_json = json.dumps(embeddings_data)
             st.download_button("Download Embeddings", data=embeddings_json, file_name="embeddings.json", mime="application/json")
         
-        # Search functionality
+        # Search functionality using k-NN
         query = st.text_input("Enter your search query")
         if query:
             query_embedding = model.encode(query)
-            results = []
-            for data in embeddings_data:
-                file_embedding = np.array(data["embedding"])
-                score = cosine_similarity(query_embedding, file_embedding)
-                results.append({
-                    "file_name": data["file_name"],
-                    "score": score,
-                    "text": data["text"]
-                })
+            embeddings_matrix = np.array([data["embedding"] for data in embeddings_data])
             
-            # Sort results by descending similarity score
-            results = sorted(results, key=lambda x: x["score"], reverse=True)
+            # Allow the user to choose the number of nearest neighbors (k)
+            k = st.slider("Select number of nearest neighbors (k)", min_value=1, 
+                          max_value=min(len(embeddings_data), 10), value=3)
             
-            st.write("### Search Results")
-            for result in results:
+            # Build and query the k-NN model using cosine distance
+            knn = NearestNeighbors(n_neighbors=k, metric="cosine")
+            knn.fit(embeddings_matrix)
+            distances, indices = knn.kneighbors([query_embedding])
+            
+            st.write("### Search Results using k‑Nearest Neighbors")
+            for i, idx in enumerate(indices[0]):
+                result = embeddings_data[idx]
+                # Convert cosine distance to similarity score: similarity = 1 - distance
+                similarity = 1 - distances[0][i]
                 st.write(f"**File:** {result['file_name']}")
-                st.write(f"**Score:** {result['score']:.4f}")
-                # Display the first 500 characters of the extracted text as a snippet
+                st.write(f"**Similarity Score:** {similarity:.4f}")
                 st.write(f"**Extract:** {result['text'][:500]}...")
                 st.write("---")
             
             # Option to save search results as CSV
             if st.button("Download Search Results as CSV"):
-                df = pd.DataFrame(results)
+                results_list = []
+                for i, idx in enumerate(indices[0]):
+                    result = embeddings_data[idx]
+                    similarity = 1 - distances[0][i]
+                    results_list.append({
+                        "file_name": result["file_name"],
+                        "similarity_score": similarity,
+                        "text_extract": result["text"][:500]
+                    })
+                df = pd.DataFrame(results_list)
                 csv_data = df.to_csv(index=False)
                 st.download_button("Download CSV", data=csv_data, file_name="search_results.csv", mime="text/csv")
 
