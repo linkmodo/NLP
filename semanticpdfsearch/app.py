@@ -126,7 +126,7 @@ def get_embedding(text):
 
 def main():
     # Add logo above title
-    st.image("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/logo_sm_1.png")
+    st.image("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/logo.png")
     st.write("Upload your documents, generate embeddings, and search for relevant content! **No files are saved upon exiting this page**")
 
     if "OPENAI_API_KEY" not in st.secrets:
