@@ -133,7 +133,7 @@ def main():
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
         return
 
-    st.sidebar.header("[Start Here]")
+    st.sidebar.header("Start Here")
     uploaded_files = st.sidebar.file_uploader(
         "Upload your documents",
         type=["pdf", "docx", "txt", "csv"],
