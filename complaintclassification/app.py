@@ -9,8 +9,10 @@ if 'initialized' not in st.session_state:
     st.session_state.initialized = False
 
 # 🔹 Load API keys from Streamlit secrets
+client = OpenAI(
+  api_key=st.secrets["OPENAI_API_KEY"],
+)
 try:
-    openai.api_key = st.secrets["OPENAI_API_KEY"]
     pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
