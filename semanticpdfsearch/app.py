@@ -6,6 +6,14 @@ import docx
 import json
 from openai import OpenAI
 from sklearn.neighbors import NearestNeighbors
+import nltk
+from nltk.tokenize import sent_tokenize
+
+# Download the punkt tokenizer for sentence splitting
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
 
 headers = {
     "authorization": st.secrets["OPENAI_API_KEY"]
@@ -39,16 +47,56 @@ def extract_text(file):
         st.warning(f"Unsupported file type: {file_type}")
     return text
 
+def chunk_text(text, max_chunk_size=4000):
+    """
+    Split text into smaller chunks that won't exceed the token limit.
+    Using sentences to make chunks more meaningful.
+    """
+    sentences = sent_tokenize(text)
+    chunks = []
+    current_chunk = []
+    current_size = 0
+    
+    for sentence in sentences:
+        # Rough estimate: 1 token ≈ 4 characters
+        sentence_size = len(sentence) // 4
+        if current_size + sentence_size > max_chunk_size:
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+            current_chunk = [sentence]
+            current_size = sentence_size
+        else:
+            current_chunk.append(sentence)
+            current_size += sentence_size
+    
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+    
+    return chunks
+
 def get_embedding(text):
     """
     Call the OpenAI API to generate embeddings using the text-embedding-3-small model.
-    Note: Wrap the text in a list and extract the embedding from the response.
+    For long texts, split into chunks and return average embedding.
     """
-    response = client.embeddings.create(
-        input=[text],
-        model="text-embedding-3-small"
-    )
-    return response.data[0].embedding
+    chunks = chunk_text(text)
+    if len(chunks) == 1:
+        response = client.embeddings.create(
+            input=[chunks[0]],
+            model="text-embedding-3-small"
+        )
+        return response.data[0].embedding
+    else:
+        # For multiple chunks, get embeddings for each and average them
+        all_embeddings = []
+        for chunk in chunks:
+            response = client.embeddings.create(
+                input=[chunk],
+                model="text-embedding-3-small"
+            )
+            all_embeddings.append(response.data[0].embedding)
+        # Calculate the average embedding
+        return np.mean(all_embeddings, axis=0).tolist()
 
 def main():
     st.title("Semantic Search Engine for Uploaded Files (OpenAI Embeddings)")
