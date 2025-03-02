@@ -5,3 +5,4 @@ numpy
 pandas
 PyPDF2
 python-docx
+NLTK
