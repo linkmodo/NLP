@@ -63,8 +63,24 @@ st.markdown(
     }
     
     /* Style sidebar */
-    .css-1d391kg {
-        background-color: rgba(255, 255, 255, 0.9);
+    .css-1d391kg, [data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Style sidebar content */
+    .css-1d391kg > div {
+        background-color: transparent !important;
+    }
+    
+    /* Style sidebar title */
+    .css-1d391kg .css-17lntkn {
+        color: #333333 !important;
+    }
+    
+    /* Style sidebar text */
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #333333 !important;
     }
     </style>
     """,
