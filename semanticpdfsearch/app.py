@@ -7,32 +7,18 @@ import json
 from openai import OpenAI
 import nltk
 
-headers = {
-    "authorization": st.secrets["OPENAI_API_KEY"]
-}
-
+# Set up OpenAI client with API key from Streamlit secrets.
 client = OpenAI(
-  api_key=st.secrets["OPENAI_API_KEY"],  # this is also the default, it can be omitted
+  api_key=st.secrets["OPENAI_API_KEY"],
 )
 
-# Download necessary NLTK resources
+# Download only the necessary NLTK resource for sentence tokenization.
 try:
     nltk.download('punkt', quiet=True)
-    nltk.download('stopwords', quiet=True)
-    nltk.download('averaged_perceptron_tagger', quiet=True)
-    NLTK_RESOURCES_AVAILABLE = True
 except Exception as e:
-    st.warning("Some NLTK resources couldn't be downloaded. Tag generation will be disabled.")
-    NLTK_RESOURCES_AVAILABLE = False
+    st.warning("Could not download required NLTK resources. Please check your configuration.")
 
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.corpus import stopwords
-from nltk import pos_tag
-
-try:
-    stop_words = set(stopwords.words('english'))
-except:
-    stop_words = set()
+from nltk.tokenize import sent_tokenize
 
 # Inject custom CSS for a white background and legible text.
 st.markdown(
@@ -78,26 +64,6 @@ def split_text_into_sentences(text):
     """Break down long text into a list of sentences."""
     return sent_tokenize(text)
 
-def generate_tags(sentence):
-    """
-    Generate candidate tags from a sentence by tokenizing,
-    POS tagging, and filtering for nouns and adjectives.
-    """
-    if not NLTK_RESOURCES_AVAILABLE:
-        return []
-    
-    try:
-        tokens = word_tokenize(sentence)
-        tagged_tokens = pos_tag(tokens)
-        # Choose nouns and adjectives that are not stopwords and longer than 2 characters.
-        candidate_tags = {token.lower() for token, tag in tagged_tokens 
-                        if tag.startswith("NN") or tag.startswith("JJ")
-                        if token.lower() not in stop_words and len(token) > 2}
-        return list(candidate_tags)
-    except Exception as e:
-        st.warning(f"Error generating tags: {str(e)}")
-        return []
-
 def cosine_similarity(a, b):
     """Calculate cosine similarity between two vectors."""
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
@@ -117,7 +83,7 @@ def main():
     st.title("Semantic Search Engine for Uploaded Files")
     st.write("Upload your documents, generate embeddings, and search for relevant content.")
 
-    # Securely set the OpenAI API key from Streamlit secrets.
+    # Check for OpenAI API key.
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
         return
@@ -142,11 +108,10 @@ def main():
                 if text:
                     # Generate full document embedding.
                     doc_embedding = get_embedding(text)
-                    # Also split text into sentences and generate sentence embeddings.
+                    # Split text into sentences and (optionally) generate a single combined embedding.
                     sentences = split_text_into_sentences(text)
                     if sentences:
-                        sentence_embeddings = get_embedding(" ".join(sentences))  # Use combined sentences for speed.
-                        # Alternatively, you could compute each sentence's embedding separately.
+                        sentence_embeddings = get_embedding(" ".join(sentences))
                     else:
                         sentence_embeddings = []
                     embeddings_data.append({
@@ -154,7 +119,7 @@ def main():
                         "text": text,
                         "embedding": doc_embedding,
                         "sentences": sentences,
-                        "sentence_embeddings": sentence_embeddings  # For simplicity, one embedding per file.
+                        "sentence_embeddings": sentence_embeddings  # One embedding per file for simplicity.
                     })
         st.success("Files processed and embeddings computed!")
         
@@ -169,19 +134,16 @@ def main():
         with st.spinner("Generating query embedding and searching..."):
             query_embedding = get_embedding(query)
             if sentence_search:
-                # For sentence-level search, process each sentence.
+                # Sentence-level search.
                 sentence_results = []
                 for data in embeddings_data:
                     for sentence in data["sentences"]:
-                        # For demonstration, using the full sentence embedding via get_embedding.
                         sent_emb = get_embedding(sentence)
                         score = cosine_similarity(query_embedding, np.array(sent_emb))
-                        tags = generate_tags(sentence)
                         sentence_results.append({
                             "file_name": data["file_name"],
                             "sentence": sentence,
-                            "score": score,
-                            "tags": tags
+                            "score": score
                         })
                 sentence_results = sorted(sentence_results, key=lambda x: x["score"], reverse=True)
                 
@@ -190,7 +152,6 @@ def main():
                     st.write(f"**File:** {res['file_name']}")
                     st.write(f"**Score:** {res['score']:.4f}")
                     st.write(f"**Sentence:** {res['sentence']}")
-                    st.write(f"**Tags:** {', '.join(res['tags'])}")
                     st.write("---")
                 
                 if st.button("Download Sentence Search Results as CSV"):
