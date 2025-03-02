@@ -6,6 +6,14 @@ import PyPDF2
 import docx
 import io
 import json
+import nltk
+
+# Download the NLTK 'punkt' tokenizer if not already present.
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+from nltk.tokenize import sent_tokenize
 
 def extract_text(file):
     """Extract text from different file types."""
@@ -31,23 +39,28 @@ def extract_text(file):
         st.warning(f"Unsupported file type: {file_type}")
     return text
 
+def split_text_into_sentences(text):
+    """Break down long text into a list of sentences."""
+    return sent_tokenize(text)
+
 def cosine_similarity(a, b):
     """Calculate cosine similarity between two vectors."""
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 def main():
     st.title("Semantic Search Engine for Uploaded Files")
-    st.write("Upload your documents below and ask questions to search for relevant content.")
+    st.write("Upload your documents and ask questions to search for relevant content.")
 
     # Sidebar options
     st.sidebar.header("Options")
-    
-    # File uploader (accepting multiple files)
     uploaded_files = st.file_uploader(
         "Upload your documents",
         type=["pdf", "docx", "txt", "csv"],
         accept_multiple_files=True
     )
+    
+    # Checkbox to choose between document-level and sentence-level search.
+    sentence_search = st.checkbox("Enable sentence-level search", value=False)
     
     if uploaded_files:
         # Load the embedding model
@@ -60,16 +73,24 @@ def main():
             st.write(f"Processing file: {file.name}")
             text = extract_text(file)
             if text:
-                # Compute embedding for the entire text
-                embedding = model.encode(text)
+                # Compute embedding for the full document
+                doc_embedding = model.encode(text)
+                # Split text into sentences and compute embeddings for each sentence
+                sentences = split_text_into_sentences(text)
+                if sentences:
+                    sentence_embeddings = model.encode(sentences)
+                else:
+                    sentence_embeddings = []
                 embeddings_data.append({
                     "file_name": file.name,
                     "text": text,
-                    "embedding": embedding.tolist()  # Convert to list for JSON serialization
+                    "embedding": doc_embedding.tolist(),  # Full document embedding
+                    "sentences": sentences,
+                    "sentence_embeddings": sentence_embeddings.tolist() if len(sentence_embeddings) else []
                 })
         st.success("Files processed and embeddings computed!")
         
-        # Option to save embeddings for future use
+        # Option to save embeddings for future use.
         if st.button("Download Embeddings JSON"):
             embeddings_json = json.dumps(embeddings_data)
             st.download_button("Download Embeddings", data=embeddings_json, file_name="embeddings.json", mime="application/json")
@@ -78,32 +99,56 @@ def main():
         query = st.text_input("Enter your search query")
         if query:
             query_embedding = model.encode(query)
-            results = []
-            for data in embeddings_data:
-                file_embedding = np.array(data["embedding"])
-                score = cosine_similarity(query_embedding, file_embedding)
-                results.append({
-                    "file_name": data["file_name"],
-                    "score": score,
-                    "text": data["text"]
-                })
-            
-            # Sort results by descending similarity score
-            results = sorted(results, key=lambda x: x["score"], reverse=True)
-            
-            st.write("### Search Results")
-            for result in results:
-                st.write(f"**File:** {result['file_name']}")
-                st.write(f"**Score:** {result['score']:.4f}")
-                # Display the first 500 characters of the extracted text as a snippet
-                st.write(f"**Extract:** {result['text'][:500]}...")
-                st.write("---")
-            
-            # Option to save search results as CSV
-            if st.button("Download Search Results as CSV"):
-                df = pd.DataFrame(results)
-                csv_data = df.to_csv(index=False)
-                st.download_button("Download CSV", data=csv_data, file_name="search_results.csv", mime="text/csv")
+            if sentence_search:
+                # Sentence-level search across all files.
+                sentence_results = []
+                for data in embeddings_data:
+                    for idx, sentence in enumerate(data["sentences"]):
+                        sent_emb = np.array(data["sentence_embeddings"][idx])
+                        score = cosine_similarity(query_embedding, sent_emb)
+                        sentence_results.append({
+                            "file_name": data["file_name"],
+                            "sentence": sentence,
+                            "score": score
+                        })
+                # Sort results by descending similarity score.
+                sentence_results = sorted(sentence_results, key=lambda x: x["score"], reverse=True)
+                
+                st.write("### Sentence-Level Search Results")
+                for res in sentence_results:
+                    st.write(f"**File:** {res['file_name']}")
+                    st.write(f"**Score:** {res['score']:.4f}")
+                    st.write(f"**Sentence:** {res['sentence']}")
+                    st.write("---")
+                
+                if st.button("Download Sentence Search Results as CSV"):
+                    df = pd.DataFrame(sentence_results)
+                    csv_data = df.to_csv(index=False)
+                    st.download_button("Download CSV", data=csv_data, file_name="sentence_search_results.csv", mime="text/csv")
+            else:
+                # Document-level search as before.
+                results = []
+                for data in embeddings_data:
+                    file_embedding = np.array(data["embedding"])
+                    score = cosine_similarity(query_embedding, file_embedding)
+                    results.append({
+                        "file_name": data["file_name"],
+                        "score": score,
+                        "text": data["text"]
+                    })
+                results = sorted(results, key=lambda x: x["score"], reverse=True)
+                
+                st.write("### Document-Level Search Results")
+                for result in results:
+                    st.write(f"**File:** {result['file_name']}")
+                    st.write(f"**Score:** {result['score']:.4f}")
+                    st.write(f"**Extract:** {result['text'][:500]}...")
+                    st.write("---")
+                
+                if st.button("Download Search Results as CSV"):
+                    df = pd.DataFrame(results)
+                    csv_data = df.to_csv(index=False)
+                    st.download_button("Download CSV", data=csv_data, file_name="search_results.csv", mime="text/csv")
 
 if __name__ == '__main__':
     main()
