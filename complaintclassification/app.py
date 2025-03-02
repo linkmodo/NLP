@@ -40,7 +40,7 @@ def initialize_pinecone():
                 name=index_name,
                 dimension=1536,
                 metric="cosine",
-                spec=ServerlessSpec(cloud="aws", region="us-west-2")
+                spec=ServerlessSpec(cloud="aws", region="us-east-1")
             )
         
         # Get the index
