@@ -55,7 +55,7 @@ index = initialize_pinecone()
 @st.cache_data
 def load_data() -> pd.DataFrame:
     try:
-        if not os.path.exists("consumer_complaints.csv"):
+        if not os.path.exists("https://github.com/linkmodo/NLP/blob/main/complaintclassification/consumer_complaints.csv"):
             st.error("Dataset file not found. Please ensure 'consumer_complaints.csv' exists in the project directory.")
             st.stop()
             
