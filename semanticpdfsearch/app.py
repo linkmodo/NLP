@@ -27,14 +27,20 @@ from nltk.tokenize import sent_tokenize
 st.markdown(
     """
     <style>
-    body {
+    .stApp {
+        background: white;
         background-image: url('https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/white_bg.jpg');
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
-        color: #333333;
-        font-family: "Helvetica", "Arial", sans-serif;
     }
+    
+    /* Make text color dark for better visibility on white background */
+    .stMarkdown, .stText, p, h1, h2, h3 {
+        color: #333333 !important;
+    }
+    
+    /* Style buttons */
     .stButton>button {
         background-color: #f0f0f0;
         color: #333333;
@@ -42,8 +48,23 @@ st.markdown(
         padding: 0.5rem 1rem;
         border-radius: 4px;
     }
+    
+    /* Style text inputs */
     .stTextInput>div>div>input {
         color: #333333;
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    /* Style file uploader */
+    .stFileUploader {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 1rem;
+        border-radius: 4px;
+    }
+    
+    /* Style sidebar */
+    .css-1d391kg {
+        background-color: rgba(255, 255, 255, 0.9);
     }
     </style>
     """,
