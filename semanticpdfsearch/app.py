@@ -4,7 +4,7 @@ import pandas as pd
 import PyPDF2
 import docx
 import json
-import openai
+from openai import OpenAI
 from sklearn.neighbors import NearestNeighbors
 
 def extract_text(file):
