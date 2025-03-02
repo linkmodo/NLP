@@ -10,6 +10,19 @@ from sklearn.model_selection import train_test_split
 import time
 import os
 from typing import List, Dict, Any
+from pinecone import Pinecone, ServerlessSpec
+
+# Now do stuff
+if 'my_index' not in pc.list_indexes().names():
+    pc.create_index(
+        name='my_index', 
+        dimension=1536, 
+        metric='euclidean',
+        spec=ServerlessSpec(
+            cloud='aws',
+            region='us-west-2'
+        )
+    )
 
 # Initialize session state
 if 'model_trained' not in st.session_state:
