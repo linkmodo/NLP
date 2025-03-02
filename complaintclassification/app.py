@@ -9,25 +9,29 @@ if 'initialized' not in st.session_state:
     st.session_state.initialized = False
 
 # Constants
-EMBEDDING_MODEL = "text-embedding-3-small"  # New embedding model
-EMBEDDING_DIMENSION = 1536  # Dimension size for the model
+EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_DIMENSION = 1536
+PINECONE_URL = "https://debt-complaints-index-judopvw.svc.aped-4627-b74a.pinecone.io"
 
 # 🔹 Load API keys from Streamlit secrets and initialize clients
 try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
+    pc = Pinecone(
+        api_key=st.secrets["PINECONE_API_KEY"],
+    )
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
     st.stop()
-
-index_name = "debt-complaints-index"
 
 # Initialize Pinecone connection
 @st.cache_resource
 def initialize_pinecone():
     try:
-        # Get the index
-        return pc.Index(index_name)
+        # Connect to the specific index using the serverless URL
+        return pc.Index(
+            name="debt-complaints-index",
+            host=PINECONE_URL
+        )
     except Exception as e:
         st.error(f"Error connecting to Pinecone: {str(e)}")
         st.stop()
@@ -46,12 +50,28 @@ def get_embedding(text: str) -> List[float]:
         st.error(f"Error generating embedding: {str(e)}")
         st.stop()
 
+# Function to search similar complaints
+def search_similar_complaints(query_text: str, top_k: int = 5):
+    try:
+        # Generate embedding for the query
+        query_embedding = get_embedding(query_text)
+        
+        # Query Pinecone index
+        index = initialize_pinecone()
+        results = index.query(
+            vector=query_embedding,
+            top_k=top_k,
+            include_metadata=True
+        )
+        
+        return results
+    except Exception as e:
+        st.error(f"Error searching complaints: {str(e)}")
+        return None
+
 # Main application flow
 st.title("📌 Consumer Debt Complaint Analyzer")
 st.write("Enter a consumer complaint to find similar complaints from our database.")
-
-# Initialize Pinecone connection
-index = initialize_pinecone()
 
 # User interface
 user_input = st.text_area("Enter Complaint Narrative:", height=150)
@@ -60,32 +80,20 @@ if st.button("Find Similar Complaints"):
     if not user_input.strip():
         st.error("Please enter a complaint narrative.")
     else:
-        try:
-            with st.spinner("Analyzing your complaint..."):
-                # Generate embedding for user input
-                embedding = get_embedding(user_input)
-                
-                # Query Pinecone for similar complaints
-                response = index.query(
-                    vector=embedding,
-                    top_k=5,  # Show 5 similar complaints
-                    include_metadata=True
-                )
-                
-                if not response["matches"]:
-                    st.info("No similar complaints found in the database.")
-                else:
-                    st.subheader("🔗 Most Similar Complaints:")
-                    for i, match in enumerate(response["matches"], 1):
-                        similarity_score = match["score"] * 100  # Convert to percentage
-                        st.markdown(
-                            f"""
-                            **Similar Complaint #{i}**
-                            - **Issue Type:** {match['metadata'].get('Issue', 'Unknown')}
-                            - **Similarity Score:** {similarity_score:.1f}%
-                            ---
-                            """
-                        )
-
-        except Exception as e:
-            st.error(f"Error processing your request: {str(e)}")
+        with st.spinner("Analyzing your complaint..."):
+            results = search_similar_complaints(user_input)
+            
+            if results and results["matches"]:
+                st.subheader("🔗 Most Similar Complaints:")
+                for i, match in enumerate(results["matches"], 1):
+                    similarity_score = match["score"] * 100
+                    st.markdown(
+                        f"""
+                        **Similar Complaint #{i}**
+                        - **Issue Type:** {match['metadata'].get('Issue', 'Unknown')}
+                        - **Similarity Score:** {similarity_score:.1f}%
+                        ---
+                        """
+                    )
+            else:
+                st.info("No similar complaints found in the database.")
