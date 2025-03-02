@@ -61,34 +61,7 @@ st.markdown(
         background-repeat: no-repeat;
         background-attachment: fixed;
     }
-    
-    /* Make text color dark for better visibility on white background */
-    .stMarkdown, .stText, p, h1, h2, h3 {
-        color: #333333 !important;
-    }
-    
-    /* Style buttons */
-    .stButton>button {
-        background-color: #f0f0f0;
-        color: #333333;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-    }
-    
-    /* Style text inputs */
-    .stTextInput>div>div>input {
-        color: #333333;
-        background-color: rgba(255, 255, 255, 0.9);
-    }
-    
-    /* Style file uploader */
-    .stFileUploader {
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 1rem;
-        border-radius: 4px;
-    }
-    
+       
     /* Style sidebar */
     .css-1d391kg, [data-testid="stSidebar"] {
         background-color: rgba(255, 255, 255, 0.7) !important;
