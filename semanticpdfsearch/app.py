@@ -225,7 +225,7 @@ def main():
     # ---------------------
     st.markdown("""
     <hr>
-    <p style="text-align: center; color: gray;">
+    <p style="text-align: left; color: gray;">
     Build by Li Fan | Powered by OpenCV & Streamlit
     </p>
     """, unsafe_allow_html=True)
