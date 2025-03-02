@@ -8,8 +8,12 @@ from openai import OpenAI
 from sklearn.neighbors import NearestNeighbors
 
 headers = {
-    "authorization": st.secrets["OPEN_API_KEY"]
+    "authorization": st.secrets["OPENAI_API_KEY"]
 }
+
+client = OpenAI(
+  api_key=st.secrets["OPENAI_API_KEY"],  # this is also the default, it can be omitted
+)
 
 def extract_text(file):
     """Extract text from various file types."""
