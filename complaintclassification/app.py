@@ -20,7 +20,6 @@ try:
     openai.api_key = st.secrets["OPENAI_API_KEY"]
     pinecone.init(
         api_key=st.secrets["PINECONE_API_KEY"],
-        environment=st.secrets["PINECONE_ENV"]
     )
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
