@@ -7,6 +7,10 @@ import json
 from openai import OpenAI
 from sklearn.neighbors import NearestNeighbors
 
+headers = {
+    "authorization": st.secrets["OPEN_API_KEY"]
+}
+
 def extract_text(file):
     """Extract text from various file types."""
     file_type = file.name.split('.')[-1].lower()
