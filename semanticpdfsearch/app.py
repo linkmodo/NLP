@@ -19,11 +19,34 @@ client = OpenAI(
   api_key=st.secrets["OPENAI_API_KEY"],
 )
 
-# Download only the necessary NLTK resource for sentence tokenization.
-try:
-    nltk.download('punkt', quiet=True)
-except Exception as e:
-    st.warning("Could not download required NLTK resources. Please check your configuration.")
+# Initialize NLTK and handle missing resources gracefully
+@st.cache_resource
+def setup_nltk():
+    try:
+        # Only download punkt if not already downloaded
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            nltk.download('punkt', quiet=True)
+        return True
+    except Exception as e:
+        st.warning("NLTK initialization failed. Falling back to basic sentence splitting.")
+        return False
+
+# Initialize NLTK
+nltk_initialized = setup_nltk()
+
+def split_text_into_sentences(text):
+    """Break down long text into a list of sentences."""
+    if nltk_initialized:
+        try:
+            return sent_tokenize(text)
+        except Exception as e:
+            # Fallback to basic splitting if NLTK fails
+            return [s.strip() for s in text.split('.') if s.strip()]
+    else:
+        # Basic sentence splitting if NLTK is not available
+        return [s.strip() for s in text.split('.') if s.strip()]
 
 from nltk.tokenize import sent_tokenize
 
@@ -113,10 +136,6 @@ def extract_text(file):
     else:
         st.warning(f"Unsupported file type: {file_type}")
     return text
-
-def split_text_into_sentences(text):
-    """Break down long text into a list of sentences."""
-    return sent_tokenize(text)
 
 def cosine_similarity(a, b):
     """Calculate cosine similarity between two vectors."""
