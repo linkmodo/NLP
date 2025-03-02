@@ -55,7 +55,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background: white;
+        background: gray;
         background-image: url('https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/semanticpdfsearch/white_bg.jpg');
         background-size: cover;
         background-repeat: no-repeat;
