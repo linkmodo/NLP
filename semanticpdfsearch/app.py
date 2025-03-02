@@ -10,10 +10,11 @@ import nltk
 from nltk.tokenize import sent_tokenize
 
 # Download the punkt tokenizer for sentence splitting
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+for resource in ['punkt', 'punkt_tab']:
+    try:
+        nltk.data.find(f'tokenizers/{resource}')
+    except LookupError:
+        nltk.download(resource)
 
 headers = {
     "authorization": st.secrets["OPENAI_API_KEY"]
