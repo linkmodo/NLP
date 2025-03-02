@@ -44,11 +44,11 @@ def get_embedding(text):
     Call the OpenAI API to generate embeddings using the text-embedding-3-small model.
     Note: Wrap the text in a list and extract the embedding from the response.
     """
-    response = openai.Embedding.create(
+    response = client.embeddings.create(
         input=[text],
         model="text-embedding-3-small"
     )
-    return response["data"][0]["embedding"]
+    return response.data[0].embedding
 
 def main():
     st.title("Semantic Search Engine for Uploaded Files (OpenAI Embeddings)")
@@ -58,7 +58,6 @@ def main():
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in Streamlit secrets. Please add it to your secrets.toml file.")
         return
-    openai.api_key = st.secrets["OPENAI_API_KEY"]
     
     # Sidebar for file uploads.
     st.sidebar.header("Options")
