@@ -8,11 +8,13 @@ from pinecone import Pinecone, ServerlessSpec
 if 'initialized' not in st.session_state:
     st.session_state.initialized = False
 
-# 🔹 Load API keys from Streamlit secrets
-client = OpenAI(
-  api_key=st.secrets["OPENAI_API_KEY"],
-)
+# Constants
+EMBEDDING_MODEL = "text-embedding-3-small"  # New embedding model
+EMBEDDING_DIMENSION = 1536  # Dimension size for the model
+
+# 🔹 Load API keys from Streamlit secrets and initialize clients
 try:
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
@@ -34,8 +36,12 @@ def initialize_pinecone():
 @st.cache_data
 def get_embedding(text: str) -> List[float]:
     try:
-        response = openai.Embedding.create(input=text, model="text-embedding-ada-002")
-        return response["data"][0]["embedding"]
+        response = client.embeddings.create(
+            input=text,
+            model=EMBEDDING_MODEL,
+            dimensions=EMBEDDING_DIMENSION
+        )
+        return response.data[0].embedding
     except Exception as e:
         st.error(f"Error generating embedding: {str(e)}")
         st.stop()
@@ -62,7 +68,7 @@ if st.button("Find Similar Complaints"):
                 # Query Pinecone for similar complaints
                 response = index.query(
                     vector=embedding,
-                    top_k=5,  # Increased to 5 similar complaints
+                    top_k=5,  # Show 5 similar complaints
                     include_metadata=True
                 )
                 
@@ -80,7 +86,6 @@ if st.button("Find Similar Complaints"):
                             ---
                             """
                         )
-                        
+
         except Exception as e:
             st.error(f"Error processing your request: {str(e)}")
-
