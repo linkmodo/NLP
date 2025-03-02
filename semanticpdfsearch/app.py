@@ -6,8 +6,16 @@ import PyPDF2
 import docx
 import io
 import json
-import openai
+from openai import OpenAI
 import nltk
+
+headers = {
+    "authorization": st.secrets["OPENAI_API_KEY"]
+}
+
+client = OpenAI(
+  api_key=st.secrets["OPENAI_API_KEY"], # Masked OpenAI API Key
+)
 
 # Download necessary NLTK resources.
 for resource in ['punkt', 'punkt_tab']:
