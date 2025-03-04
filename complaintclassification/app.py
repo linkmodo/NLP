@@ -95,11 +95,12 @@ def search_similar_complaints(query_text: str, top_k: int = 5):
         return None
 
 # Main application flow
-st.title("📌 Consumer Debt Complaint Analyzer 📌")
+st.title("📌Consumer Debt Complaint Analyzer")
 
-# Sidebar: choose an option
+# Sidebar: choose an option with default set to "Find Similar Complaints"
 menu = st.sidebar.radio("Select an Option:", 
-                          ["Upload Single Complaint", "Upload CSV for Embeddings", "Find Similar Complaints"])
+                          ["Find Similar Complaints", "Upload Single Complaint", "Upload CSV for Embeddings"],
+                          index=0)  # Setting index=0 makes the first option default
 
 if menu == "Upload Single Complaint":
     st.header("Upload a New Complaint")
@@ -161,8 +162,8 @@ elif menu == "Upload CSV for Embeddings":
                         index.upsert(vectors=[vector_item], namespace="default")
                     st.success("CSV data processed and embeddings uploaded successfully!")
 
-elif menu == "Find Similar Complaints":
-    st.header("Find Similar Complaints")
+elif menu == "Find Similar Issues":
+    st.header("Find Similar Issues")
     user_input = st.text_area("Enter Complaint Narrative for Search:", height=150)
     
     if st.button("Search Similar Complaints"):
