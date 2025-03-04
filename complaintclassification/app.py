@@ -2,13 +2,32 @@ import streamlit as st
 from openai import OpenAI
 import pandas as pd
 from pinecone import Pinecone
-from typing import List
+from typing import List, Dict, Tuple
 import uuid
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Constants
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSION = 1536
 PINECONE_URL = "https://debt-complaints-index-judopvw.svc.aped-4627-b74a.pinecone.io"
+
+# Predefined categories with their descriptions
+COMPLAINT_CATEGORIES = {
+    "Harassment": "Aggressive collection practices, repeated calls, threats, or inappropriate contact",
+    "Billing Dispute": "Incorrect amounts, unauthorized charges, or fee-related issues",
+    "Identity Theft": "Unauthorized accounts, fraudulent activity, or identity verification issues",
+    "Credit Reporting": "Inaccurate credit reporting, disputes with credit bureaus, or reporting errors",
+    "Payment Processing": "Issues with payments not being processed, applied incorrectly, or delayed",
+    "Communication Issues": "Lack of response, unclear information, or language barriers",
+    "Legal Concerns": "Issues related to lawsuits, legal notices, or statutory violations",
+    "Account Management": "Problems with account status, balance, or servicing",
+    "Settlement Issues": "Problems with debt settlement, negotiations, or resolution attempts",
+    "Documentation": "Missing or incorrect documentation, verification requests"
+}
+
+# Category embeddings cache
+category_embeddings = {}
 
 # 🔹 Load API keys from Streamlit secrets and initialize clients
 try:
@@ -46,6 +65,44 @@ def get_embedding(text: str) -> List[float]:
         st.error(f"Error generating embedding: {str(e)}")
         st.stop()
 
+@st.cache_data
+def get_category_embedding(category: str, description: str) -> List[float]:
+    """Generate embedding for a category using its name and description"""
+    try:
+        text = f"{category}: {description}"
+        response = client.embeddings.create(
+            model=EMBEDDING_MODEL,
+            input=text,
+            dimensions=EMBEDDING_DIMENSION
+        )
+        return response.data[0].embedding
+    except Exception as e:
+        st.error(f"Error generating category embedding: {str(e)}")
+        return None
+
+def initialize_category_embeddings():
+    """Initialize embeddings for all categories"""
+    for category, description in COMPLAINT_CATEGORIES.items():
+        if category not in category_embeddings:
+            category_embeddings[category] = get_category_embedding(category, description)
+
+def classify_complaint(complaint_embedding: List[float]) -> Tuple[str, float]:
+    """Classify a complaint based on its embedding"""
+    initialize_category_embeddings()
+    
+    # Calculate similarity with each category
+    similarities = {}
+    for category, category_emb in category_embeddings.items():
+        similarity = cosine_similarity(
+            np.array(complaint_embedding).reshape(1, -1),
+            np.array(category_emb).reshape(1, -1)
+        )[0][0]
+        similarities[category] = similarity
+    
+    # Get the most similar category
+    best_category = max(similarities.items(), key=lambda x: x[1])
+    return best_category[0], best_category[1]
+
 # Function to upload a single complaint to Pinecone
 def upload_complaint(complaint_text: str, complaint_id: str, metadata: dict):
     try:
@@ -70,6 +127,9 @@ def search_similar_complaints(query_text: str, top_k: int = 10):
         query_embedding = get_embedding(query_text)
         index = initialize_pinecone()
         
+        # Classify the query
+        category, confidence = classify_complaint(query_embedding)
+        
         results = index.query(
             vector=query_embedding,
             top_k=top_k,
@@ -77,10 +137,10 @@ def search_similar_complaints(query_text: str, top_k: int = 10):
             namespace="default"
         )
         
-        return results
+        return results, category, confidence
     except Exception as e:
         st.error(f"Error searching complaints: {str(e)}")
-        return None
+        return None, None, None
 
 # Main application flow
 st.title("📌 Consumer Debt Complaint Analyzer 📌")
@@ -159,7 +219,18 @@ elif menu == "Find Similar Complaints":
             st.error("Please enter a complaint narrative.")
         else:
             with st.spinner("Analyzing your complaint..."):
-                results = search_similar_complaints(user_input)
+                results, category, confidence = search_similar_complaints(user_input)
+                
+                if category:
+                    st.subheader("🎯 Complaint Classification:")
+                    st.markdown(
+                        f"""
+                        **Predicted Category:** {category}
+                        **Confidence Score:** {confidence * 100:.1f}%
+                        **Category Description:** {COMPLAINT_CATEGORIES[category]}
+                        ---
+                        """
+                    )
                 
                 if results and results.get("matches"):
                     st.subheader("🔗 Most Similar Complaints:")
