@@ -1,12 +1,9 @@
 import streamlit as st
-from openai import OpenAI
+import openai
 import pandas as pd
+from pinecone import Pinecone
 from typing import List
-from pinecone import Pinecone, ServerlessSpec
-
-# Initialize session state for tracking initialization
-if 'initialized' not in st.session_state:
-    st.session_state.initialized = False
+import uuid
 
 # Constants
 EMBEDDING_MODEL = "text-embedding-3-small"
@@ -15,10 +12,8 @@ PINECONE_URL = "https://debt-complaints-index-judopvw.svc.aped-4627-b74a.pinecon
 
 # 🔹 Load API keys from Streamlit secrets and initialize clients
 try:
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    pc = Pinecone(
-        api_key=st.secrets["PINECONE_API_KEY"],
-    )
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
+    pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
     st.stop()
@@ -50,36 +45,49 @@ def initialize_pinecone():
 @st.cache_data
 def get_embedding(text: str) -> List[float]:
     try:
-        response = client.embeddings.create(
-            input=text,
-            model=EMBEDDING_MODEL,
-            dimensions=EMBEDDING_DIMENSION
+        response = openai.Embedding.create(
+            input=[text],
+            model=EMBEDDING_MODEL
         )
-        return response.data[0].embedding
+        return response['data'][0]['embedding']
     except Exception as e:
         st.error(f"Error generating embedding: {str(e)}")
         st.stop()
 
-# Function to search similar complaints
-def search_similar_complaints(query_text: str, top_k: int = 5):
+# Function to upload a single complaint to Pinecone
+def upload_complaint(complaint_text: str, complaint_id: str, metadata: dict):
     try:
-        # Generate embedding for the query
-        query_embedding = get_embedding(query_text)
-        st.write("Generated embedding dimension:", len(query_embedding))
-        
-        # Query Pinecone index
+        embedding = get_embedding(complaint_text)
         index = initialize_pinecone()
         
-        # Perform the query with namespace
+        vector_item = {
+            "id": complaint_id,
+            "values": embedding,
+            "metadata": metadata
+        }
+        
+        upsert_response = index.upsert(vectors=[vector_item], namespace="default")
+        st.write("Upsert response:", upsert_response)
+        return upsert_response
+    except Exception as e:
+        st.error(f"Error uploading complaint: {str(e)}")
+        return None
+
+# Function to search for similar complaints using cosine similarity
+def search_similar_complaints(query_text: str, top_k: int = 5):
+    try:
+        query_embedding = get_embedding(query_text)
+        st.write("Generated embedding dimension:", len(query_embedding))
+        index = initialize_pinecone()
+        
         results = index.query(
             vector=query_embedding,
             top_k=top_k,
             include_metadata=True,
-            namespace="default"  # Explicitly specify namespace
+            namespace="default"
         )
         
-        st.write("Raw query results:", results)  # Debug information
-        
+        st.write("Raw query results:", results)
         return results
     except Exception as e:
         st.error(f"Error searching complaints: {str(e)}")
@@ -87,32 +95,89 @@ def search_similar_complaints(query_text: str, top_k: int = 5):
 
 # Main application flow
 st.title("📌 Consumer Debt Complaint Analyzer")
-st.write("Enter a consumer complaint to find similar complaints from our database.")
 
-# User interface
-user_input = st.text_area("Enter Complaint Narrative:", height=150)
+# Sidebar: choose an option
+menu = st.sidebar.radio("Select an Option:", 
+                          ["Upload Single Complaint", "Upload CSV for Embeddings", "Find Similar Complaints"])
 
-if st.button("Find Similar Complaints"):
-    if not user_input.strip():
-        st.error("Please enter a complaint narrative.")
-    else:
-        with st.spinner("Analyzing your complaint..."):
-            results = search_similar_complaints(user_input)
+if menu == "Upload Single Complaint":
+    st.header("Upload a New Complaint")
+    complaint_text = st.text_area("Enter Complaint Narrative:", height=150)
+    issue_type = st.text_input("Issue Type", value="Unknown")
+    
+    if st.button("Upload Complaint"):
+        if not complaint_text.strip():
+            st.error("Please enter a complaint narrative.")
+        else:
+            complaint_id = str(uuid.uuid4())
+            metadata = {"Issue": issue_type}
+            with st.spinner("Uploading your complaint..."):
+                response = upload_complaint(complaint_text, complaint_id, metadata)
+                if response:
+                    st.success("Complaint uploaded successfully! ID: " + complaint_id)
+
+elif menu == "Upload CSV for Embeddings":
+    st.header("Upload CSV File for Embedding Generation")
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+    
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            st.write("CSV Data Preview:")
+            st.dataframe(df.head())
+        except Exception as e:
+            st.error(f"Error reading CSV file: {e}")
+        
+        if not df.empty:
+            text_column = st.selectbox("Select column for complaint text:", df.columns)
+            issue_column = st.selectbox("Select column for issue type (optional):", ["None"] + list(df.columns))
             
-            if results and results.get("matches"):
-                st.subheader("🔗 Most Similar Complaints:")
-                for i, match in enumerate(results["matches"], 1):
-                    similarity_score = match["score"] * 100
-                    metadata = match.get("metadata", {})
-                    st.markdown(
-                        f"""
-                        **Similar Complaint #{i}**
-                        - **Issue Type:** {metadata.get('Issue', 'Unknown')}
-                        - **Similarity Score:** {similarity_score:.1f}%
-                        - **ID:** {match.get('id', 'Unknown')}
-                        ---
-                        """
-                    )
-            else:
-                st.error("No similar complaints found in the database. Please check if the index contains data.")
-                st.write("Debug information:", results)  # Show raw results for debugging
+            if st.button("Process CSV"):
+                with st.spinner("Generating embeddings and uploading to Pinecone..."):
+                    index = initialize_pinecone()
+                    for i, row in df.iterrows():
+                        complaint_text = str(row[text_column])
+                        # Use selected issue column if provided
+                        if issue_column != "None":
+                            metadata = {"Issue": row[issue_column]}
+                        else:
+                            metadata = {"Issue": "Unknown"}
+                        complaint_id = str(uuid.uuid4())
+                        embedding = get_embedding(complaint_text)
+                        vector_item = {
+                            "id": complaint_id,
+                            "values": embedding,
+                            "metadata": metadata
+                        }
+                        # Upsert the vector for each row
+                        index.upsert(vectors=[vector_item], namespace="default")
+                    st.success("CSV data processed and embeddings uploaded successfully!")
+
+elif menu == "Find Similar Complaints":
+    st.header("Find Similar Complaints")
+    user_input = st.text_area("Enter Complaint Narrative for Search:", height=150)
+    
+    if st.button("Search Similar Complaints"):
+        if not user_input.strip():
+            st.error("Please enter a complaint narrative.")
+        else:
+            with st.spinner("Analyzing your complaint..."):
+                results = search_similar_complaints(user_input)
+                
+                if results and results.get("matches"):
+                    st.subheader("🔗 Most Similar Complaints:")
+                    for i, match in enumerate(results["matches"], 1):
+                        similarity_score = match["score"] * 100
+                        metadata = match.get("metadata", {})
+                        st.markdown(
+                            f"""
+                            **Similar Complaint #{i}**
+                            - **Issue Type:** {metadata.get('Issue', 'Unknown')}
+                            - **Similarity Score:** {similarity_score:.1f}%
+                            - **ID:** {match.get('id', 'Unknown')}
+                            ---
+                            """
+                        )
+                else:
+                    st.error("No similar complaints found in the database. Please check if the index contains data.")
+                    st.write("Debug information:", results)
