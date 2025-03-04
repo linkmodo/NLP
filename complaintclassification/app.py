@@ -7,6 +7,40 @@ import uuid
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Set page title and configuration
+st.set_page_config(
+    page_title="Consumer Debt Complaint Analyzer by Li Fan",
+    page_icon="📌",
+    layout="wide"
+)
+
+# Add custom CSS for background and sidebar
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-image: url("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/complaintclassification/abstract_flow_background_0407.jpg");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    .css-1d391kg {
+        background-color: rgba(255, 255, 255, 0.8) !important;
+    }
+    .stMarkdown {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 5px;
+        margin: 5px 0;
+    }
+    .stButton>button {
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Constants
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSION = 1536
