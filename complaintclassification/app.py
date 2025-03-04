@@ -24,17 +24,9 @@ st.markdown(
         background-position: center;
         background-attachment: fixed;
     }
-    .css-1d391kg {
-        background-color: rgba(255, 255, 255, 0.8) !important;
-    }
-    .stMarkdown {
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 10px;
-        border-radius: 5px;
-        margin: 5px 0;
-    }
-    .stButton>button {
-        background-color: rgba(255, 255, 255, 0.9);
+    [data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
     }
     </style>
     """,
