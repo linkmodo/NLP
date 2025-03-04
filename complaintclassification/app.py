@@ -130,7 +130,8 @@ elif menu == "Upload CSV for Embeddings":
             st.error(f"Error reading CSV file: {e}")
         
         if not df.empty:
-            text_column = st.selectbox("Select column for complaint text:", df.columns)
+            # Use 'narrative' column by default
+            text_column = 'narrative'
             issue_column = st.selectbox("Select column for issue type (optional):", ["None"] + list(df.columns))
             
             if st.button("Process CSV"):
