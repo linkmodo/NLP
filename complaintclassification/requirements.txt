@@ -1,6 +1,8 @@
 streamlit
 openai
-pinecone
-pandas 
-numpy 
+pandas
+pinecone-client
+numpy
 scikit-learn
+python-dotenv
+tqdm
