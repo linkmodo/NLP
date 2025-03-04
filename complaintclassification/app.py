@@ -95,7 +95,7 @@ def search_similar_complaints(query_text: str, top_k: int = 5):
         return None
 
 # Main application flow
-st.title("📌 Consumer Debt Complaint Analyzer")
+st.title("📌 Consumer Debt Complaint Analyzer 📌")
 
 # Sidebar: choose an option
 menu = st.sidebar.radio("Select an Option:", 
@@ -111,7 +111,7 @@ if menu == "Upload Single Complaint":
             st.error("Please enter a complaint narrative.")
         else:
             complaint_id = str(uuid.uuid4())
-            metadata = {"Issue": issue_type}
+            metadata = {"Issue": issue_type, "Narrative": complaint_text}
             with st.spinner("Uploading your complaint..."):
                 response = upload_complaint(complaint_text, complaint_id, metadata)
                 if response:
@@ -140,9 +140,15 @@ elif menu == "Upload CSV for Embeddings":
                         complaint_text = str(row[text_column])
                         # Use selected issue column if provided
                         if issue_column != "None":
-                            metadata = {"Issue": row[issue_column]}
+                            metadata = {
+                                "Issue": row[issue_column],
+                                "Narrative": complaint_text
+                            }
                         else:
-                            metadata = {"Issue": "Unknown"}
+                            metadata = {
+                                "Issue": "Unknown",
+                                "Narrative": complaint_text
+                            }
                         complaint_id = str(uuid.uuid4())
                         embedding = get_embedding(complaint_text)
                         vector_item = {
@@ -176,6 +182,10 @@ elif menu == "Find Similar Complaints":
                             - **Issue Type:** {metadata.get('Issue', 'Unknown')}
                             - **Similarity Score:** {similarity_score:.1f}%
                             - **ID:** {match.get('id', 'Unknown')}
+                            
+                            **Complaint Narrative:**
+                            {metadata.get('Narrative', 'No narrative available')}
+                            
                             ---
                             """
                         )
