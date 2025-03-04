@@ -25,7 +25,7 @@ st.markdown(
         background-attachment: fixed;
     }
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(255, 255, 255, 0.2);
         backdrop-filter: blur(10px);
     }
     </style>
