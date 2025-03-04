@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 import pandas as pd
 from pinecone import Pinecone
 from typing import List
@@ -12,7 +12,7 @@ PINECONE_URL = "https://debt-complaints-index-judopvw.svc.aped-4627-b74a.pinecon
 
 # 🔹 Load API keys from Streamlit secrets and initialize clients
 try:
-    openai.api_key = st.secrets["OPENAI_API_KEY"]
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 except Exception as e:
     st.error(f"Error loading API keys. Please check your .streamlit/secrets.toml file: {str(e)}")
@@ -45,11 +45,12 @@ def initialize_pinecone():
 @st.cache_data
 def get_embedding(text: str) -> List[float]:
     try:
-        response = openai.Embedding.create(
-            input=[text],
-            model=EMBEDDING_MODEL
+        response = client.embeddings.create(
+            model=EMBEDDING_MODEL,
+            input=text,
+            dimensions=EMBEDDING_DIMENSION
         )
-        return response['data'][0]['embedding']
+        return response.data[0].embedding
     except Exception as e:
         st.error(f"Error generating embedding: {str(e)}")
         st.stop()
