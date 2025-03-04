@@ -122,7 +122,7 @@ def upload_complaint(complaint_text: str, complaint_id: str, metadata: dict):
         return None
 
 # Function to search for similar complaints using cosine similarity
-def search_similar_complaints(query_text: str, top_k: int = 10):
+def search_similar_complaints(query_text: str, top_k: int = 5):
     try:
         query_embedding = get_embedding(query_text)
         index = initialize_pinecone()
@@ -147,26 +147,10 @@ st.title("📌 Consumer Debt Complaint Analyzer 📌")
 
 # Sidebar: choose an option with default set to "Find Similar Complaints"
 menu = st.sidebar.radio("Select an Option:", 
-                          ["Find Similar Complaints", "Upload Single Complaint", "Upload CSV for Embeddings"],
+                          ["Find Similar Complaints", "Upload CSV for Embeddings"],
                           index=0)  # Setting index=0 makes the first option default
 
-if menu == "Upload Single Complaint":
-    st.header("Upload a New Complaint")
-    complaint_text = st.text_area("Enter Complaint Narrative:", height=150)
-    issue_type = st.text_input("Issue Type", value="Unknown")
-    
-    if st.button("Upload Complaint"):
-        if not complaint_text.strip():
-            st.error("Please enter a complaint narrative.")
-        else:
-            complaint_id = str(uuid.uuid4())
-            metadata = {"Issue": issue_type, "Narrative": complaint_text}
-            with st.spinner("Uploading your complaint..."):
-                response = upload_complaint(complaint_text, complaint_id, metadata)
-                if response:
-                    st.success("Complaint uploaded successfully! ID: " + complaint_id)
-
-elif menu == "Upload CSV for Embeddings":
+if menu == "Upload CSV for Embeddings":
     st.header("Upload CSV File for Embedding Generation")
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
     
@@ -250,3 +234,14 @@ elif menu == "Find Similar Complaints":
                         )
                 else:
                     st.error("No similar complaints found in the database.")
+
+# Add footer at the very end of the file
+st.markdown("---")
+st.markdown(
+    """
+    <div style='text-align: center; color: gray; padding: 10px;'>
+    Built by Li Fan, 2025 - Powered by Streamlit, Pinecone and OpenAI.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
