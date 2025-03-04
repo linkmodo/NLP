@@ -65,7 +65,7 @@ def upload_complaint(complaint_text: str, complaint_id: str, metadata: dict):
         return None
 
 # Function to search for similar complaints using cosine similarity
-def search_similar_complaints(query_text: str, top_k: int = 5):
+def search_similar_complaints(query_text: str, top_k: int = 10):
     try:
         query_embedding = get_embedding(query_text)
         index = initialize_pinecone()
