@@ -22,20 +22,11 @@ except Exception as e:
 @st.cache_resource
 def initialize_pinecone():
     try:
-        # List available indexes
-        indexes = pc.list_indexes()
-        st.write("Available indexes:", [index.name for index in indexes])
-        
         # Connect to the specific index using the serverless URL
         index = pc.Index(
             name="debt-complaints-index",
             host=PINECONE_URL
         )
-        
-        # Test the connection by getting index stats
-        stats = index.describe_index_stats()
-        st.write("Index stats:", stats)
-        
         return index
     except Exception as e:
         st.error(f"Error connecting to Pinecone: {str(e)}")
@@ -68,7 +59,6 @@ def upload_complaint(complaint_text: str, complaint_id: str, metadata: dict):
         }
         
         upsert_response = index.upsert(vectors=[vector_item], namespace="default")
-        st.write("Upsert response:", upsert_response)
         return upsert_response
     except Exception as e:
         st.error(f"Error uploading complaint: {str(e)}")
@@ -78,7 +68,6 @@ def upload_complaint(complaint_text: str, complaint_id: str, metadata: dict):
 def search_similar_complaints(query_text: str, top_k: int = 5):
     try:
         query_embedding = get_embedding(query_text)
-        st.write("Generated embedding dimension:", len(query_embedding))
         index = initialize_pinecone()
         
         results = index.query(
@@ -88,7 +77,6 @@ def search_similar_complaints(query_text: str, top_k: int = 5):
             namespace="default"
         )
         
-        st.write("Raw query results:", results)
         return results
     except Exception as e:
         st.error(f"Error searching complaints: {str(e)}")
@@ -192,5 +180,4 @@ elif menu == "Find Similar Complaints":
                             """
                         )
                 else:
-                    st.error("No similar complaints found in the database. Please check if the index contains data.")
-                    st.write("Debug information:", results)
+                    st.error("No similar complaints found in the database.")
