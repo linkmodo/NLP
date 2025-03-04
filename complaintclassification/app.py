@@ -222,15 +222,13 @@ elif menu == "Find Similar Complaints":
                 results, category, confidence = search_similar_complaints(user_input)
                 
                 if category:
-                    st.subheader("🎯 Complaint Classification:")
-                    st.markdown(
-                        f"""
-                        **Predicted Category:** {category}
-                        **Confidence Score:** {confidence * 100:.1f}%
-                        **Category Description:** {COMPLAINT_CATEGORIES[category]}
-                        ---
-                        """
-                    )
+                    col1, col2 = st.columns([1, 2])
+                    with col1:
+                        st.markdown(f"**🎯 Category:** {category}")
+                        st.markdown(f"**Confidence:** {confidence * 100:.1f}%")
+                    with col2:
+                        st.markdown(f"**Description:** {COMPLAINT_CATEGORIES[category]}")
+                    st.markdown("---")
                 
                 if results and results.get("matches"):
                     st.subheader("🔗 Most Similar Complaints:")
