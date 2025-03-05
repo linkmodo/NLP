@@ -24,10 +24,23 @@ st.markdown(
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
+        color: #000000 !important;  /* Force black text color */
     }
     [data-testid="stSidebar"] {
         background-color: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
+    }
+    /* Ensure text is visible on all devices */
+    .stMarkdown, .stTextInput, .stTextArea, .stSelectbox, .stRadio {
+        color: #000000 !important;
+    }
+    /* Make sure links are visible */
+    a {
+        color: #0066cc !important;
+    }
+    /* Ensure plotly text is visible */
+    .js-plotly-plot .plotly .main-svg {
+        color: #000000 !important;
     }
     </style>
     """,
