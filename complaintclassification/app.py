@@ -251,7 +251,9 @@ if menu == "Upload CSV for Embeddings":
 
 elif menu == "Find Similar Complaints":
     st.header("Find Similar Complaints")
-    user_input = st.text_area("Enter Complaint Narrative for Search:", height=150)
+    user_input = st.text_area("Enter Complaint Narrative for Search:", 
+                             value="My dog ate the payment check that I was supposed to mail out.",
+                             height=100)
     
     if st.button("Search Similar Complaints"):
         if not user_input.strip():
