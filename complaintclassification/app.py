@@ -6,6 +6,7 @@ from typing import List, Dict, Tuple
 import uuid
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+import plotly.graph_objects as go
 
 # Set page title and configuration
 st.set_page_config(
@@ -298,9 +299,6 @@ if stats:
     top_5_stats = dict(list(stats.items())[:5])
     total_complaints = sum(stats.values())
 
-    # Create horizontal bar chart using plotly
-    import plotly.graph_objects as go
-    
     fig = go.Figure(go.Bar(
         x=list(top_5_stats.values()),
         y=list(top_5_stats.keys()),
@@ -310,11 +308,19 @@ if stats:
     ))
 
     fig.update_layout(
-        title="Top 5 Complaint Categories",
-        xaxis_title="<br>".join(["Number of", "Complaints"]),  # Wrap text with line break
-        height=400,
-        width=1000,  # Set explicit width
-        yaxis={'categoryorder':'total ascending'},
+        title={
+            'text': "Top 5 Complaint Categories",
+            'font': {'size': 24}
+        },
+        xaxis_title="Number of Complaints",
+        height=500,
+        width=800,  # Set explicit width
+        yaxis={
+            'categoryorder':'total ascending',
+            'tickfont': {'size': 16},  # Increase category text size
+            'tickmode': 'array',
+            'ticktext': ['<br>'.join(category.split()) for category in top_5_stats.keys()]  # Wrap category text
+        },
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
     )
