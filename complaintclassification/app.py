@@ -198,7 +198,7 @@ def get_complaint_statistics():
         return None
 
 # Main application flow
-st.title("📌 Consumer Debt Complaint Analyzer 📌")
+st.title("📌 Consumer Debt Complaint Analyzer Tool")
 
 # Sidebar menu
 menu = st.sidebar.radio("Select an Option:", 
@@ -331,7 +331,7 @@ if stats:
 st.markdown("---")
 st.markdown(
     """
-    <div style='text-align: center; color: gray; padding: 10px;'>
+    <div style='text-align: left; color: gray; padding: 5px;'>
     Built by Li Fan, 2025 - Powered by Streamlit, Pinecone and OpenAI.
     </div>
     """,
