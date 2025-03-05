@@ -296,9 +296,11 @@ stats = get_complaint_statistics()
 if stats:
     # Get top 5 complaints
     top_5_stats = dict(list(stats.items())[:5])
+    total_complaints = sum(stats.values())
 
-# Create horizontal bar chart using plotly
-import plotly.graph_objects as go  
+    # Create horizontal bar chart using plotly
+    import plotly.graph_objects as go
+    
     fig = go.Figure(go.Bar(
         x=list(top_5_stats.values()),
         y=list(top_5_stats.keys()),
@@ -309,15 +311,16 @@ import plotly.graph_objects as go
 
     fig.update_layout(
         title="Top 5 Complaint Categories",
-        xaxis_title="Number of Complaints",
+        xaxis_title="<br>".join(["Number of", "Complaints"]),  # Wrap text with line break
         height=400,
+        width=1000,  # Set explicit width
         yaxis={'categoryorder':'total ascending'},
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
     )
 
-    st.plotly_chart(fig, use_container_width=True)
-    
+    st.plotly_chart(fig, use_container_width=False)  # Disable container width to use explicit width
+
 # Add footer at the very end of the file
 st.markdown("---")
 st.markdown(
