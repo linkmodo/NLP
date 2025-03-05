@@ -313,11 +313,11 @@ if stats:
             'font': {'size': 24}
         },
         xaxis_title="Number of Complaints",
-        height=500,
-        width=800,  # Set explicit width
+        height=400,
+        width=950,  # Set explicit width
         yaxis={
             'categoryorder':'total ascending',
-            'tickfont': {'size': 16},  # Increase category text size
+            'tickfont': {'size': 12},  # Increase category text size
             'tickmode': 'array',
             'ticktext': ['<br>'.join(category.split()) for category in top_5_stats.keys()]  # Wrap category text
         },
