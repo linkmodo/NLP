@@ -199,23 +199,7 @@ def get_complaint_statistics():
 # Main application flow
 st.title("📌 Consumer Debt Complaint Analyzer 📌")
 
-# Add statistics to sidebar
-st.sidebar.markdown("### 📊 Top Complaints")
-stats = get_complaint_statistics()
-if stats:
-    # Create a bar chart of top 10 complaints
-    top_10_stats = dict(list(stats.items())[:10])
-    st.sidebar.bar_chart(top_10_stats)
-    
-    # Show detailed statistics
-    st.sidebar.markdown("#### Detailed Statistics:")
-    total_complaints = sum(stats.values())
-    for issue, count in top_10_stats.items():
-        percentage = (count / total_complaints) * 100
-        st.sidebar.markdown(f"- {issue}: {count} ({percentage:.1f}%)")
-
-# Sidebar menu (existing code)
-st.sidebar.markdown("---")  # Add separator
+# Sidebar menu
 menu = st.sidebar.radio("Select an Option:", 
                           ["Find Similar Complaints", "Upload CSV for Embeddings"],
                           index=0)
@@ -304,6 +288,48 @@ elif menu == "Find Similar Complaints":
                         )
                 else:
                     st.error("No similar complaints found in the database.")
+
+# Add statistics section before footer
+st.markdown("---")
+st.header("📊 Top Complaint Statistics")
+stats = get_complaint_statistics()
+if stats:
+    # Get top 10 complaints
+    top_10_stats = dict(list(stats.items())[:10])
+    total_complaints = sum(stats.values())
+    
+    # Create two columns for the statistics
+    col1, col2 = st.columns([3, 2])
+    
+    with col1:
+        # Create horizontal bar chart using plotly
+        import plotly.graph_objects as go
+        
+        fig = go.Figure(go.Bar(
+            x=list(top_10_stats.values()),
+            y=list(top_10_stats.keys()),
+            orientation='h',
+            text=[f"{(count/total_complaints)*100:.1f}%" for count in top_10_stats.values()],
+            textposition='auto',
+        ))
+        
+        fig.update_layout(
+            title="Top 10 Complaint Categories",
+            xaxis_title="Number of Complaints",
+            yaxis_title="Category",
+            height=400,
+            yaxis={'categoryorder':'total ascending'},
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        st.subheader("Detailed Breakdown")
+        for issue, count in top_10_stats.items():
+            percentage = (count / total_complaints) * 100
+            st.markdown(f"- **{issue}**: {count:,} ({percentage:.1f}%)")
 
 # Add footer at the very end of the file
 st.markdown("---")
