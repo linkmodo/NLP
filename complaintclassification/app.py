@@ -25,7 +25,7 @@ st.markdown(
         background-attachment: fixed;
     }
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
     }
     </style>
@@ -294,8 +294,8 @@ st.markdown("---")
 st.header("📊 Top Complaint Statistics")
 stats = get_complaint_statistics()
 if stats:
-    # Get top 10 complaints
-    top_10_stats = dict(list(stats.items())[:10])
+    # Get top 5 complaints
+    top_5_stats = dict(list(stats.items())[:5])
     total_complaints = sum(stats.values())
     
     # Create two columns for the statistics
@@ -306,17 +306,16 @@ if stats:
         import plotly.graph_objects as go
         
         fig = go.Figure(go.Bar(
-            x=list(top_10_stats.values()),
-            y=list(top_10_stats.keys()),
+            x=list(top_5_stats.values()),
+            y=list(top_5_stats.keys()),
             orientation='h',
-            text=[f"{(count/total_complaints)*100:.1f}%" for count in top_10_stats.values()],
+            text=[f"{(count/total_complaints)*100:.1f}%" for count in top_5_stats.values()],
             textposition='auto',
         ))
         
         fig.update_layout(
-            title="Top 10 Complaint Categories",
+            title="Top 5 Complaint Categories",
             xaxis_title="Number of Complaints",
-            yaxis_title="Category",
             height=400,
             yaxis={'categoryorder':'total ascending'},
             plot_bgcolor='rgba(0,0,0,0)',
@@ -325,12 +324,6 @@ if stats:
         
         st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
-        st.subheader("Detailed Breakdown")
-        for issue, count in top_10_stats.items():
-            percentage = (count / total_complaints) * 100
-            st.markdown(f"- **{issue}**: {count:,} ({percentage:.1f}%)")
-
 # Add footer at the very end of the file
 st.markdown("---")
 st.markdown(
