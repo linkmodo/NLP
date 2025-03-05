@@ -25,7 +25,7 @@ st.markdown(
         background-attachment: fixed;
     }
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(10px);
     }
     </style>
@@ -168,13 +168,57 @@ def search_similar_complaints(query_text: str, top_k: int = 5):
         st.error(f"Error searching complaints: {str(e)}")
         return None, None, None
 
+# Function to get complaint statistics
+def get_complaint_statistics():
+    try:
+        index = initialize_pinecone()
+        stats = {}
+        
+        # Fetch all vectors with metadata
+        results = index.query(
+            vector=[0] * EMBEDDING_DIMENSION,  # dummy vector
+            top_k=10000,  # adjust based on your data size
+            include_metadata=True,
+            namespace="default"
+        )
+        
+        if results and results.get("matches"):
+            # Count issues
+            for match in results["matches"]:
+                issue = match.get("metadata", {}).get("Issue", "Unknown")
+                stats[issue] = stats.get(issue, 0) + 1
+            
+            # Sort by frequency
+            sorted_stats = dict(sorted(stats.items(), key=lambda x: x[1], reverse=True))
+            return sorted_stats
+        return None
+    except Exception as e:
+        st.error(f"Error fetching statistics: {str(e)}")
+        return None
+
 # Main application flow
 st.title("📌 Consumer Debt Complaint Analyzer 📌")
 
-# Sidebar: choose an option with default set to "Find Similar Complaints"
+# Add statistics to sidebar
+st.sidebar.markdown("### 📊 Top Complaints")
+stats = get_complaint_statistics()
+if stats:
+    # Create a bar chart of top 10 complaints
+    top_10_stats = dict(list(stats.items())[:10])
+    st.sidebar.bar_chart(top_10_stats)
+    
+    # Show detailed statistics
+    st.sidebar.markdown("#### Detailed Statistics:")
+    total_complaints = sum(stats.values())
+    for issue, count in top_10_stats.items():
+        percentage = (count / total_complaints) * 100
+        st.sidebar.markdown(f"- {issue}: {count} ({percentage:.1f}%)")
+
+# Sidebar menu (existing code)
+st.sidebar.markdown("---")  # Add separator
 menu = st.sidebar.radio("Select an Option:", 
                           ["Find Similar Complaints", "Upload CSV for Embeddings"],
-                          index=0)  # Setting index=0 makes the first option default
+                          index=0)
 
 if menu == "Upload CSV for Embeddings":
     st.header("Upload CSV File for Embedding Generation")
