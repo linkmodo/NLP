@@ -296,33 +296,27 @@ stats = get_complaint_statistics()
 if stats:
     # Get top 5 complaints
     top_5_stats = dict(list(stats.items())[:5])
-    total_complaints = sum(stats.values())
-    
-    # Create two columns for the statistics
-    col1, col2 = st.columns([3, 2])
-    
-    with col1:
-        # Create horizontal bar chart using plotly
-        import plotly.graph_objects as go
-        
-        fig = go.Figure(go.Bar(
-            x=list(top_5_stats.values()),
-            y=list(top_5_stats.keys()),
-            orientation='h',
-            text=[f"{(count/total_complaints)*100:.1f}%" for count in top_5_stats.values()],
-            textposition='auto',
-        ))
-        
-        fig.update_layout(
-            title="Top 5 Complaint Categories",
-            xaxis_title="Number of Complaints",
-            height=400,
-            yaxis={'categoryorder':'total ascending'},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+
+# Create horizontal bar chart using plotly
+import plotly.graph_objects as go  
+    fig = go.Figure(go.Bar(
+        x=list(top_5_stats.values()),
+        y=list(top_5_stats.keys()),
+        orientation='h',
+        text=[f"{(count/total_complaints)*100:.1f}%" for count in top_5_stats.values()],
+        textposition='auto',
+    ))
+
+    fig.update_layout(
+        title="Top 5 Complaint Categories",
+        xaxis_title="Number of Complaints",
+        height=400,
+        yaxis={'categoryorder':'total ascending'},
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
     
 # Add footer at the very end of the file
 st.markdown("---")
