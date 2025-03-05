@@ -506,7 +506,7 @@ if menu == "Upload CSV for Embeddings":
 elif menu == "Find Similar Complaints":
     st.header("Find Similar Complaints")
     user_input = st.text_area("Enter Complaint Narrative for Search:", 
-                             value="Sorry, I couldn’t pay my credit card bill because my pet goldfish accidentally transferred all my money into its offshore account. Turns out, it’s been binge-watching financial thrillers and now thinks it’s a Wall Street tycoon. I’m negotiating with it, but it’s demanding a 10% cut of my salary to release the funds.",
+                             value="Sorry, I couldn’t pay my credit card bill because my pet goldfish accidentally transferred all my money into its offshore account.",
                              height=100)
     
     if st.button("Search Similar Complaints"):
