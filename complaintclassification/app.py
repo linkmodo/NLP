@@ -292,7 +292,7 @@ elif menu == "Find Similar Complaints":
 
 # Add statistics section before footer
 st.markdown("---")
-st.header("📊 Top Complaint Statistics")
+st.header("📊 Top Complaint Stats Overview")
 stats = get_complaint_statistics()
 if stats:
     # Get top 5 complaints
