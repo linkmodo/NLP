@@ -20,15 +20,11 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-image: url("https://raw.githubusercontent.com/linkmodo/NLP/refs/heads/main/complaintclassification/abstract_flow_background_0407.jpg");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        color: #000000 !important;  /* Force black text color */
+        background-color: #ffffff;
+        color: #000000 !important;
     }
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
+        background-color: #ffffff;
     }
     /* Ensure text is visible on all devices */
     .stMarkdown, .stTextInput, .stTextArea, .stSelectbox, .stRadio {
@@ -41,6 +37,10 @@ st.markdown(
     /* Ensure plotly text is visible */
     .js-plotly-plot .plotly .main-svg {
         color: #000000 !important;
+    }
+    /* Add subtle border to sidebar */
+    [data-testid="stSidebar"] {
+        border-right: 1px solid #e0e0e0;
     }
     </style>
     """,
