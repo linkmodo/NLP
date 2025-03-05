@@ -15,38 +15,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Add custom CSS for background and sidebar
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: #ffffff;
-        color: #000000 !important;
-    }
-    [data-testid="stSidebar"] {
-        background-color: #ffffff;
-    }
-    /* Ensure text is visible on all devices */
-    .stMarkdown, .stTextInput, .stTextArea, .stSelectbox, .stRadio {
-        color: #000000 !important;
-    }
-    /* Make sure links are visible */
-    a {
-        color: #0066cc !important;
-    }
-    /* Ensure plotly text is visible */
-    .js-plotly-plot .plotly .main-svg {
-        color: #000000 !important;
-    }
-    /* Add subtle border to sidebar */
-    [data-testid="stSidebar"] {
-        border-right: 1px solid #e0e0e0;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Constants
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSION = 1536
