@@ -35,10 +35,9 @@ The model classifies text into three categories:
 def analyze_sentiment(text):
     """Analyze sentiment of given text"""
     result = st.session_state.sentiment_analyzer(text)[0]
-    label = result['label']
+    label = result['label'].upper()  # normalize label to match keys
     score = result['score']
     
-    # Map label to our format
     label_map = {
         'NEGATIVE': -1,
         'NEUTRAL': 0,
