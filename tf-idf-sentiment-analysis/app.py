@@ -109,5 +109,18 @@ The model uses TF-IDF vectorization and Logistic Regression for classification.
 - Training/Testing split: 75%/25%
 - Text preprocessing: TF-IDF vectorization with 5000 features
 
-[View source code on GitHub](https://github.com/YOUR_USERNAME/social-media-sentiment-classifier)
+#####
+
+You can now:
+
+Enter any social media comment in the text area
+See the sentiment prediction (Negative, Neutral, or Positive)
+View the confidence scores for each sentiment class
+The model has been trained on both Reddit and Twitter data with:
+
+200,222 total samples
+94.05% training accuracy
+93.00% testing accuracy
+This is a robust social media sentiment classifier that can handle a wide variety of comments. 
+Feel free to test it with different phrases to see how it performs!
 """)
