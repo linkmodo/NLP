@@ -5,6 +5,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 import joblib
 import os
+import requests
+from io import BytesIO
 
 # Set page config
 st.set_page_config(
@@ -24,19 +26,36 @@ This app classifies social media comments (from Reddit and Twitter) into three c
 The model is trained on a combined dataset of Reddit and Twitter comments to provide better coverage and accuracy across different social media platforms.
 """)
 
-def load_model():
-    """Load the trained model and vectorizer"""
-    model_path = os.path.join('models', 'model.joblib')
-    vectorizer_path = os.path.join('models', 'vectorizer.joblib')
+def download_model_from_github(url):
+    """Download model file from GitHub"""
+    # Convert GitHub URL to raw format
+    raw_url = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/')
     
-    if not os.path.exists(model_path) or not os.path.exists(vectorizer_path):
-        st.error("Model files not found in the models directory. Please run train_model.py first to train the model.")
+    try:
+        response = requests.get(raw_url)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        return BytesIO(response.content)
+    except Exception as e:
+        st.error(f"Error downloading model: {str(e)}")
         st.stop()
+
+def load_model():
+    """Load the trained model and vectorizer from GitHub"""
+    # GitHub URLs for model files
+    model_url = "https://github.com/linkmodo/NLP/blob/main/tf-idf-sentiment-analysis/models/model.joblib"
+    vectorizer_url = "https://github.com/linkmodo/NLP/blob/main/tf-idf-sentiment-analysis/models/vectorizer.joblib"
     
-    # Load the saved model and vectorizer
-    model = joblib.load(model_path)
-    vectorizer = joblib.load(vectorizer_path)
-    return model, vectorizer
+    try:
+        # Download and load model files
+        model_data = download_model_from_github(model_url)
+        vectorizer_data = download_model_from_github(vectorizer_url)
+        
+        model = joblib.load(model_data)
+        vectorizer = joblib.load(vectorizer_data)
+        return model, vectorizer
+    except Exception as e:
+        st.error(f"Error loading model: {str(e)}")
+        st.stop()
 
 def predict_sentiment(text, model, vectorizer):
     """Predict sentiment for the given text"""
@@ -49,7 +68,8 @@ def predict_sentiment(text, model, vectorizer):
     return prediction, probs
 
 # Load the model and vectorizer
-model, vectorizer = load_model()
+with st.spinner("Loading model from GitHub..."):
+    model, vectorizer = load_model()
 
 # Create text input
 user_input = st.text_area("Enter your comment:", height=100)
