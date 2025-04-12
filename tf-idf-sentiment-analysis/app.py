@@ -26,32 +26,29 @@ This app classifies social media comments (from Reddit and Twitter) into three c
 The model is trained on a combined dataset of Reddit and Twitter comments to provide better coverage and accuracy across different social media platforms.
 """)
 
-def download_model_from_github(url):
-    """Download model file from GitHub"""
-    # Convert GitHub URL to raw format
-    raw_url = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/')
-    
-    try:
-        response = requests.get(raw_url)
-        response.raise_for_status()  # Raise an exception for bad status codes
-        return BytesIO(response.content)
-    except Exception as e:
-        st.error(f"Error downloading model: {str(e)}")
-        st.stop()
-
 def load_model():
     """Load the trained model and vectorizer from GitHub"""
-    # GitHub URLs for model files
-    model_url = "https://github.com/linkmodo/NLP/blob/main/tf-idf-sentiment-analysis/models/model.joblib"
-    vectorizer_url = "https://github.com/linkmodo/NLP/blob/main/tf-idf-sentiment-analysis/models/vectorizer.joblib"
+    # Direct raw URLs from GitHub
+    model_url = "https://raw.githubusercontent.com/linkmodo/NLP/main/tf-idf-sentiment-analysis/models/model.joblib"
+    vectorizer_url = "https://raw.githubusercontent.com/linkmodo/NLP/main/tf-idf-sentiment-analysis/models/vectorizer.joblib"
     
     try:
-        # Download and load model files
-        model_data = download_model_from_github(model_url)
-        vectorizer_data = download_model_from_github(vectorizer_url)
+        # Download model files
+        model_response = requests.get(model_url)
+        vectorizer_response = requests.get(vectorizer_url)
         
-        model = joblib.load(model_data)
-        vectorizer = joblib.load(vectorizer_data)
+        # Check if requests were successful
+        if model_response.status_code != 200:
+            st.error(f"Failed to download model file. Status code: {model_response.status_code}")
+            st.stop()
+        if vectorizer_response.status_code != 200:
+            st.error(f"Failed to download vectorizer file. Status code: {vectorizer_response.status_code}")
+            st.stop()
+        
+        # Load the model and vectorizer from memory
+        model = joblib.load(BytesIO(model_response.content))
+        vectorizer = joblib.load(BytesIO(vectorizer_response.content))
+        
         return model, vectorizer
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
