@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 from dotenv import load_dotenv
+import torch
 
 # Load environment variables
 load_dotenv()
@@ -18,9 +19,12 @@ st.set_page_config(
 # Initialize session state for model
 if 'sentiment_analyzer' not in st.session_state:
     with st.spinner("Loading sentiment analysis model..."):
+        # Check if CUDA is available, otherwise use CPU
+        device = 0 if torch.cuda.is_available() else -1
         st.session_state.sentiment_analyzer = pipeline(
             task="sentiment-analysis",
-            model="cardiffnlp/twitter-roberta-base-sentiment-latest"
+            model="cardiffnlp/twitter-roberta-base-sentiment-latest",
+            device=device  # Use GPU if available, otherwise CPU
         )
 
 # Title and description
@@ -112,4 +116,12 @@ posts and can effectively analyze the emotional tone of text.
 - **Training**: Fine-tuned on Twitter data
 - **Task**: Sentiment Analysis
 - **Labels**: Negative, Neutral, Positive
+
+#### Device Information
 """)
+
+# Display device information
+if torch.cuda.is_available():
+    st.markdown(f"Running on GPU: {torch.cuda.get_device_name(0)}")
+else:
+    st.markdown("Running on CPU")
