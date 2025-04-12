@@ -99,7 +99,7 @@ def plot_confusion_matrix(cm):
     return buf
 
 # Create tabs for different functionalities
-tab1, tab2, tab3 = st.tabs(["Analyze Text", "Upload Data", "Model Evaluation"])
+tab1 = st.tabs(["Analyze Text"])
 
 with tab1:
     # Text input for sentiment analysis
@@ -125,84 +125,6 @@ with tab1:
             st.header("Confidence Score")
             st.progress(confidence)
             st.text(f"{confidence:.2%} confident in this prediction")
-
-with tab2:
-    st.header("Upload Training Data")
-    st.markdown("""
-    Upload a CSV file containing social media comments and their sentiment labels.
-    
-    The file should have:
-    * A column containing text (with 'text' in the column name)
-    * A column containing sentiment labels (with 'sentiment' or 'category' in the column name)
-    * Sentiment values should be: -1 (negative), 0 (neutral), or 1 (positive)
-    """)
-    
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-    
-    if uploaded_file is not None:
-        try:
-            with st.spinner("Processing and uploading data..."):
-                # No implementation for uploading data
-                st.success("Successfully uploaded data!")
-        except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
-
-with tab3:
-    st.header("Model Evaluation")
-    st.markdown("""
-    This section evaluates the model's performance using a test set of pre-labeled comments.
-    The evaluation includes:
-    * Confusion Matrix
-    * Classification Report (Precision, Recall, F1-Score)
-    * Performance Analysis
-    """)
-    
-    if st.button("Run Evaluation"):
-        with st.spinner("Evaluating model performance..."):
-            # Convert sample data to DataFrame
-            df = pd.DataFrame(sample_data)
-            
-            # Evaluate model
-            confusion_mat, class_report, preds = evaluate_model(df['text'], df['true_sentiment'])
-            
-            # Display confusion matrix
-            st.subheader("Confusion Matrix")
-            st.image(plot_confusion_matrix(confusion_mat))
-            
-            # Display classification report
-            st.subheader("Classification Report")
-            report_df = pd.DataFrame(class_report).transpose()
-            st.dataframe(report_df.style.format("{:.2f}"))
-            
-            # Calculate overall accuracy
-            accuracy = class_report['accuracy']
-            st.metric("Overall Accuracy", f"{accuracy:.2%}")
-            
-            # Analysis and insights
-            st.subheader("Analysis and Insights")
-            
-            # Calculate class-wise performance
-            class_performance = {
-                "Negative": class_report['Negative']['f1-score'],
-                "Neutral": class_report['Neutral']['f1-score'],
-                "Positive": class_report['Positive']['f1-score']
-            }
-            
-            # Find best and worst performing classes
-            best_class = max(class_performance.items(), key=lambda x: x[1])
-            worst_class = min(class_performance.items(), key=lambda x: x[1])
-            
-            st.markdown(f"""
-            #### Key Findings:
-            1. **Overall Performance**: The model achieves {accuracy:.2%} accuracy across all classes.
-            2. **Best Performance**: Most accurate in detecting {best_class[0]} sentiment (F1-score: {best_class[1]:.2f})
-            3. **Challenging Cases**: Less accurate with {worst_class[0]} sentiment (F1-score: {worst_class[1]:.2f})
-            
-            #### Potential Improvements:
-            1. Increase training data for {worst_class[0]} class
-            2. Fine-tune model parameters for better balance
-            3. Consider context and domain-specific features
-            """)
 
 # Add information section
 st.markdown("---")
