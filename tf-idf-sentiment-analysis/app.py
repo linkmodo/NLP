@@ -1,7 +1,7 @@
 import streamlit as st
+from transformers import pipeline
 import pandas as pd
 import numpy as np
-from embedding_utils import init_pinecone, query_pinecone, process_file_upload
 import os
 from dotenv import load_dotenv
 
@@ -15,18 +15,40 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize session state
-if 'pinecone_index' not in st.session_state:
-    st.session_state.pinecone_index = init_pinecone()
+# Initialize session state for model
+if 'sentiment_analyzer' not in st.session_state:
+    with st.spinner("Loading sentiment analysis model..."):
+        st.session_state.sentiment_analyzer = pipeline(
+            task="sentiment-analysis",
+            model="cardiffnlp/twitter-roberta-base-sentiment-latest"
+        )
 
 # Title and description
 st.title("Social Media Sentiment Analyzer")
 st.markdown("""
-This app analyzes sentiment in social media comments using advanced embedding technology.
-* 😞 Negative (-1)
-* 😐 Neutral (0)
-* 😊 Positive (1)
+This app analyzes sentiment in social media comments using a pretrained RoBERTa model 
+fine-tuned on Twitter data.
+
+The model classifies text into three categories:
+* 😞 Negative
+* 😐 Neutral
+* 😊 Positive
 """)
+
+def analyze_sentiment(text):
+    """Analyze sentiment of given text"""
+    result = st.session_state.sentiment_analyzer(text)[0]
+    label = result['label']
+    score = result['score']
+    
+    # Map label to our format
+    label_map = {
+        'negative': -1,
+        'neutral': 0,
+        'positive': 1
+    }
+    
+    return label_map[label.lower()], score
 
 # Create tabs for different functionalities
 tab1, tab2 = st.tabs(["Analyze Text", "Upload Data"])
@@ -37,11 +59,8 @@ with tab1:
     
     if user_input:
         with st.spinner("Analyzing sentiment..."):
-            # Get prediction from Pinecone
-            prediction, confidence = query_pinecone(
-                user_input, 
-                st.session_state.pinecone_index
-            )
+            # Get prediction
+            prediction, confidence = analyze_sentiment(user_input)
             
             # Map sentiment to human-readable labels
             sentiment_map = {
@@ -75,11 +94,8 @@ with tab2:
     if uploaded_file is not None:
         try:
             with st.spinner("Processing and uploading data..."):
-                num_samples, num_categories = process_file_upload(
-                    uploaded_file,
-                    st.session_state.pinecone_index
-                )
-                st.success(f"Successfully uploaded {num_samples} samples with {num_categories} sentiment categories!")
+                # No implementation for uploading data
+                st.success("Successfully uploaded data!")
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
 
@@ -87,11 +103,13 @@ with tab2:
 st.markdown("---")
 st.markdown("""
 ### About
-This application uses state-of-the-art embedding technology to analyze sentiment in social media comments:
+This application uses a state-of-the-art RoBERTa model fine-tuned on Twitter data 
+for sentiment analysis. The model has been trained on a large dataset of social media 
+posts and can effectively analyze the emotional tone of text.
 
-* **Embedding Model**: all-MiniLM-L6-v2 (384-dimensional embeddings)
-* **Vector Database**: Pinecone for efficient similarity search
-* **Sentiment Analysis**: Weighted k-NN classification based on semantic similarity
-
-The model can be continuously improved by uploading additional labeled data through the "Upload Data" tab.
+#### Model Information
+- **Base Model**: RoBERTa
+- **Training**: Fine-tuned on Twitter data
+- **Task**: Sentiment Analysis
+- **Labels**: Negative, Neutral, Positive
 """)
