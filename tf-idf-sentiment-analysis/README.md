@@ -1,74 +1,70 @@
-# Social Media Sentiment Classifier
+# Social Media Sentiment Analyzer
 
-A machine learning application that classifies social media comments (Reddit and Twitter) into positive, neutral, or negative sentiments using TF-IDF vectorization and Logistic Regression.
-
-## Demo
-
-[Live Demo](YOUR_STREAMLIT_CLOUD_URL)
-
-![App Screenshot](screenshot.png)
+A Streamlit web application that analyzes sentiment in social media comments using a pretrained RoBERTa model fine-tuned on Twitter data.
 
 ## Features
 
-- Real-time sentiment prediction
-- Confidence scores for each sentiment class
-- Clean and intuitive user interface
-- Pre-trained model using both Reddit and Twitter data
-- Cross-platform sentiment analysis
+- Real-time sentiment analysis of text input
+- Three sentiment categories: Positive, Neutral, and Negative
+- Confidence scores for predictions
+- Modern, user-friendly interface
+
+## Model
+
+The application uses the `cardiffnlp/twitter-roberta-base-sentiment-latest` model, which is:
+- Based on the RoBERTa architecture
+- Fine-tuned specifically for social media sentiment analysis
+- Optimized for Twitter-style text
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/social-media-sentiment-classifier.git
-cd social-media-sentiment-classifier
+git clone https://github.com/YOUR_USERNAME/social-media-sentiment-analyzer.git
+cd social-media-sentiment-analyzer
 ```
 
-2. Install the required packages:
+2. Create a virtual environment (optional but recommended):
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Train the model (first time only):
-```bash
-python train_model.py
-```
+## Usage
 
-4. Run the Streamlit app:
+1. Start the Streamlit app:
 ```bash
 streamlit run app.py
 ```
 
-## Dataset
+2. Open your web browser and go to `http://localhost:8501`
 
-The model is trained on a combined dataset of Reddit and Twitter comments with the following sentiment labels:
-- -1: Negative sentiment
-- 0: Neutral sentiment
-- 1: Positive sentiment
+3. Enter text in the input box and see the sentiment analysis results!
 
-The data is split into:
-- 75% training data
-- 25% testing data
+## Requirements
 
-## Model Details
+- Python 3.8+
+- Dependencies listed in `requirements.txt`
 
-- Text Vectorization: TF-IDF with 5000 features
-- Algorithm: Logistic Regression
-- Training/Testing Split: 75/25
+## Project Structure
 
-## Technologies Used
-
-- Python
-- Streamlit
-- scikit-learn
-- pandas
-- numpy
-- joblib
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+```
+social-media-sentiment-analyzer/
+├── app.py              # Main Streamlit application
+├── requirements.txt    # Python dependencies
+├── README.md          # Project documentation
+└── .gitignore         # Git ignore file
+```
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+MIT License
+
+## Contributing
+
+Feel free to open issues or submit pull requests if you find any bugs or have suggestions for improvements.
