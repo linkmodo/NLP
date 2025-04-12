@@ -26,13 +26,16 @@ The model is trained on a combined dataset of Reddit and Twitter comments to pro
 
 def load_model():
     """Load the trained model and vectorizer"""
-    if not os.path.exists('model.joblib') or not os.path.exists('vectorizer.joblib'):
-        st.error("Model files not found. Please run train_model.py first to train the model.")
+    model_path = os.path.join('models', 'model.joblib')
+    vectorizer_path = os.path.join('models', 'vectorizer.joblib')
+    
+    if not os.path.exists(model_path) or not os.path.exists(vectorizer_path):
+        st.error("Model files not found in the models directory. Please run train_model.py first to train the model.")
         st.stop()
     
     # Load the saved model and vectorizer
-    model = joblib.load('model.joblib')
-    vectorizer = joblib.load('vectorizer.joblib')
+    model = joblib.load(model_path)
+    vectorizer = joblib.load(vectorizer_path)
     return model, vectorizer
 
 def predict_sentiment(text, model, vectorizer):
@@ -88,4 +91,6 @@ The model uses TF-IDF vectorization and Logistic Regression for classification.
 - Combined Reddit and Twitter comments
 - Training/Testing split: 75%/25%
 - Text preprocessing: TF-IDF vectorization with 5000 features
+
+[View source code on GitHub](https://github.com/YOUR_USERNAME/social-media-sentiment-classifier)
 """)
