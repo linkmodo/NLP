@@ -88,6 +88,4 @@ The model uses TF-IDF vectorization and Logistic Regression for classification.
 - Combined Reddit and Twitter comments
 - Training/Testing split: 75%/25%
 - Text preprocessing: TF-IDF vectorization with 5000 features
-
-[View source code on GitHub](https://github.com/YOUR_USERNAME/social-media-sentiment-classifier)
 """)
