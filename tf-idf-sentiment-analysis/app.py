@@ -1,126 +1,97 @@
 import streamlit as st
-import joblib
+import pandas as pd
 import numpy as np
-from pathlib import Path
+from embedding_utils import init_pinecone, query_pinecone, process_file_upload
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Set page config
 st.set_page_config(
-    page_title="Sentiment Analysis App",
-    page_icon="😊",
+    page_title="Social Media Sentiment Analyzer",
+    page_icon="🤖",
     layout="wide"
 )
 
-# Load the model and vectorizer
-@st.cache_resource
-def load_model():
-    try:
-        model_path = "https://raw.githubusercontent.com/linkmodo/NLP/main/tf-idf-sentiment-analysis/models/model.joblib"
-        vectorizer_path = "https://raw.githubusercontent.com/linkmodo/NLP/main/tf-idf-sentiment-analysis/models/vectorizer.joblib"
-        
-        if not model_path.exists() or not vectorizer_path.exists():
-            st.error("Model files not found. Please ensure the model files are in the 'models' folder.")
-            return None, None
-            
-        model = joblib.load(model_path)
-        vectorizer = joblib.load(vectorizer_path)
-            
-        return model, vectorizer
-    except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
-        return None, None
+# Initialize session state
+if 'pinecone_index' not in st.session_state:
+    st.session_state.pinecone_index = init_pinecone()
 
-def predict_sentiment(text, model, vectorizer):
-    try:
-        # Transform text using the vectorizer
-        text_features = vectorizer.transform([text])
-        
-        # Get prediction and probability
-        prediction = model.predict(text_features)[0]
-        probabilities = model.predict_proba(text_features)[0]
-        
-        # Get confidence score
-        confidence = max(probabilities)
-        
-        return prediction, confidence
-    except Exception as e:
-        st.error(f"Error in prediction: {str(e)}")
-        return None, None
+# Title and description
+st.title("Social Media Sentiment Analyzer")
+st.markdown("""
+This app analyzes sentiment in social media comments using advanced embedding technology.
+* 😞 Negative (-1)
+* 😐 Neutral (0)
+* 😊 Positive (1)
+""")
 
-def main():
-    st.title("Sentiment Analysis App")
+# Create tabs for different functionalities
+tab1, tab2 = st.tabs(["Analyze Text", "Upload Data"])
+
+with tab1:
+    # Text input for sentiment analysis
+    user_input = st.text_area("Enter your comment:", height=100)
     
-    # Add custom CSS
+    if user_input:
+        with st.spinner("Analyzing sentiment..."):
+            # Get prediction from Pinecone
+            prediction, confidence = query_pinecone(
+                user_input, 
+                st.session_state.pinecone_index
+            )
+            
+            # Map sentiment to human-readable labels
+            sentiment_map = {
+                -1: "Negative 😞",
+                0: "Neutral 😐",
+                1: "Positive 😊"
+            }
+            
+            # Display prediction
+            st.header("Prediction")
+            st.markdown(f"### This comment appears to be: {sentiment_map[prediction]}")
+            
+            # Display confidence
+            st.header("Confidence Score")
+            st.progress(confidence)
+            st.text(f"{confidence:.2%} confident in this prediction")
+
+with tab2:
+    st.header("Upload Training Data")
     st.markdown("""
-        <style>
-        .stTextInput>div>div>input {
-            font-size: 16px;
-            padding: 10px;
-        }
-        .sentiment-positive {
-            color: green;
-            font-size: 24px;
-        }
-        .sentiment-negative {
-            color: red;
-            font-size: 24px;
-        }
-        .confidence-bar {
-            height: 20px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-            margin: 10px 0;
-        }
-        .confidence-fill {
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.5s;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    Upload a CSV file containing social media comments and their sentiment labels.
     
-    # Load model and vectorizer
-    model, vectorizer = load_model()
+    The file should have:
+    * A column containing text (with 'text' in the column name)
+    * A column containing sentiment labels (with 'sentiment' or 'category' in the column name)
+    * Sentiment values should be: -1 (negative), 0 (neutral), or 1 (positive)
+    """)
     
-    if model is None or vectorizer is None:
-        st.stop()
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
     
-    # Input text area
-    st.subheader("Enter your text for sentiment analysis")
-    text = st.text_area("", height=150, placeholder="Type your text here...")
-    
-    if text:
-        # Get prediction
-        prediction, confidence = predict_sentiment(text, model, vectorizer)
-        
-        if prediction is not None:
-            # Display results
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader("Sentiment")
-                if prediction == 1:
-                    st.markdown('<p class="sentiment-positive">Positive 😊</p>', unsafe_allow_html=True)
-                else:
-                    st.markdown('<p class="sentiment-negative">Negative 😞</p>', unsafe_allow_html=True)
-            
-            with col2:
-                st.subheader("Confidence")
-                # Create confidence bar
-                confidence_percent = confidence * 100
-                st.markdown(f"""
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: {confidence_percent}%; background-color: {'#4CAF50' if prediction == 1 else '#f44336'};"></div>
-                    </div>
-                    <p style="text-align: center;">{confidence_percent:.1f}%</p>
-                """, unsafe_allow_html=True)
-    
-    # Add footer
-    st.markdown("---")
-    st.markdown("""
-        <div style="text-align: center; color: grey; font-size: 14px;">
-            Built with Streamlit • Powered by TF-IDF
-        </div>
-    """, unsafe_allow_html=True)
+    if uploaded_file is not None:
+        try:
+            with st.spinner("Processing and uploading data..."):
+                num_samples, num_categories = process_file_upload(
+                    uploaded_file,
+                    st.session_state.pinecone_index
+                )
+                st.success(f"Successfully uploaded {num_samples} samples with {num_categories} sentiment categories!")
+        except Exception as e:
+            st.error(f"Error processing file: {str(e)}")
 
-if __name__ == "__main__":
-    main() 
+# Add information section
+st.markdown("---")
+st.markdown("""
+### About
+This application uses state-of-the-art embedding technology to analyze sentiment in social media comments:
+
+* **Embedding Model**: all-MiniLM-L6-v2 (384-dimensional embeddings)
+* **Vector Database**: Pinecone for efficient similarity search
+* **Sentiment Analysis**: Weighted k-NN classification based on semantic similarity
+
+The model can be continuously improved by uploading additional labeled data through the "Upload Data" tab.
+""")
