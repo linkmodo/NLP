@@ -44,6 +44,7 @@ class RAGSystem:
             if self.huggingface_token:
                 self.llm = HuggingFaceHub(
                     repo_id="google/flan-t5-base",
+                    task="text-generation",
                     model_kwargs={"temperature": 0.7, "max_length": 512},
                     huggingfacehub_api_token=self.huggingface_token
                 )
