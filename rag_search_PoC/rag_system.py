@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from langchain.chains import RetrievalQA
-from langchain.llms import HuggingFaceHub
+from langchain_community.llms import HuggingFaceHub
 import os
 import logging
 
