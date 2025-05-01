@@ -4,6 +4,7 @@ from document_processor import DocumentProcessor
 from rag_system import RAGSystem
 import tempfile
 import logging
+from huggingface_hub import HfApi
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +20,14 @@ if 'documents_processed' not in st.session_state:
 huggingface_token = os.getenv("HUGGINGFACE_API_TOKEN")
 if not huggingface_token:
     st.error("HUGGINGFACE_API_TOKEN not found in environment variables. Please add it to your .env file.")
+else:
+    try:
+        api = HfApi(token=huggingface_token)
+        user_info = api.whoami()
+        st.success(f"Connected to HuggingFace as: {user_info['name']}")
+    except Exception as e:
+        st.error(f"Invalid HuggingFace API token: {str(e)}")
+        huggingface_token = None
 
 # Page config
 st.set_page_config(
@@ -102,7 +111,7 @@ if st.session_state.documents_processed:
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 except Exception as e:
                     logger.error(f"Error generating response: {str(e)}")
-                    error_message = "An error occurred while generating the response. Please try again."
+                    error_message = f"An error occurred while generating the response: {str(e)}"
                     st.error(error_message)
                     st.session_state.messages.append({"role": "assistant", "content": error_message})
 else:
