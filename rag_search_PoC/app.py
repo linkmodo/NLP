@@ -6,6 +6,13 @@ import tempfile
 import logging
 from huggingface_hub import HfApi
 
+# Page config must be the first Streamlit command
+st.set_page_config(
+    page_title="RAG Search Utility",
+    page_icon="🔍",
+    layout="wide"
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,13 +35,6 @@ else:
     except Exception as e:
         st.error(f"Invalid HuggingFace API token: {str(e)}")
         huggingface_token = None
-
-# Page config
-st.set_page_config(
-    page_title="RAG Search Utility",
-    page_icon="🔍",
-    layout="wide"
-)
 
 # Title and description
 st.title("🔍 RAG Search Utility")
