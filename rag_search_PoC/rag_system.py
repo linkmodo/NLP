@@ -52,9 +52,10 @@ class RAGSystem:
                 logger.info("Language model initialized and tested successfully")
             else:
                 logger.error("Cannot initialize language model: No API token provided to RAGSystem")
+                raise ValueError("HuggingFace API token not provided. Cannot initialize LLM.")
         except Exception as e:
             logger.error(f"Error initializing language model: {str(e)}")
-            self.llm = None
+            raise
     
     def query(self, question: str) -> str:
         """Query the RAG system with a question."""
