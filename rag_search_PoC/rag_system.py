@@ -7,6 +7,7 @@ from langchain.llms import HuggingFaceHub
 import os
 from dotenv import load_dotenv
 import logging
+from huggingface_hub import HfApi
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +28,15 @@ class RAGSystem:
         self.huggingface_token = os.getenv("HUGGINGFACE_API_TOKEN")
         if not self.huggingface_token:
             logger.warning("HUGGINGFACE_API_TOKEN not found in environment variables")
+        else:
+            # Validate the token
+            try:
+                api = HfApi(token=self.huggingface_token)
+                api.whoami()  # This will raise an error if the token is invalid
+                logger.info("HuggingFace API token validated successfully")
+            except Exception as e:
+                logger.error(f"Invalid HuggingFace API token: {str(e)}")
+                self.huggingface_token = None
         
     def initialize(self, documents: List[Dict]):
         """Initialize the RAG system with processed documents."""
@@ -54,9 +64,11 @@ class RAGSystem:
                     model_kwargs={"temperature": 0.7, "max_length": 512},
                     huggingfacehub_api_token=self.huggingface_token
                 )
-                logger.info("Language model initialized successfully")
+                # Test the model with a simple query
+                test_response = self.llm("Hello")
+                logger.info("Language model initialized and tested successfully")
             else:
-                logger.error("Cannot initialize language model: No API token provided")
+                logger.error("Cannot initialize language model: No valid API token provided")
         except Exception as e:
             logger.error(f"Error initializing language model: {str(e)}")
             self.llm = None
@@ -101,4 +113,4 @@ class RAGSystem:
             return response
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
-            return "Error: Could not generate a response. Please check your HuggingFace API token and try again." 
+            return f"Error: Could not generate a response. Details: {str(e)}" 
