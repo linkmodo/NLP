@@ -70,8 +70,8 @@ with st.sidebar:
                         processor = DocumentProcessor()
                         documents = processor.process_directory(temp_dir)
                         
-                        # Initialize RAG system
-                        st.session_state.rag_system = RAGSystem()
+                        # Initialize RAG system, passing the validated token
+                        st.session_state.rag_system = RAGSystem(huggingface_token=huggingface_token)
                         st.session_state.rag_system.initialize(documents)
                         st.session_state.documents_processed = True
                         
