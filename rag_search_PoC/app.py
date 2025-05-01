@@ -1,5 +1,7 @@
 import streamlit as st
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from document_processor import DocumentProcessor
 from rag_system import RAGSystem
 import tempfile
