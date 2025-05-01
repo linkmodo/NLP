@@ -5,38 +5,21 @@ import numpy as np
 from langchain.chains import RetrievalQA
 from langchain.llms import HuggingFaceHub
 import os
-from dotenv import load_dotenv
 import logging
-from huggingface_hub import HfApi
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-
 class RAGSystem:
-    def __init__(self):
+    def __init__(self, huggingface_token: str = None):
         # Initialize the embedding model
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         self.vector_store = None
         self.documents = None
         self.retriever = None
         self.llm = None
-        
-        # Check for API token
-        self.huggingface_token = os.getenv("HUGGINGFACE_API_TOKEN")
-        if not self.huggingface_token:
-            logger.warning("HUGGINGFACE_API_TOKEN not found in environment variables")
-        else:
-            # Validate the token
-            try:
-                api = HfApi(token=self.huggingface_token)
-                api.whoami()  # This will raise an error if the token is invalid
-                logger.info("HuggingFace API token validated successfully")
-            except Exception as e:
-                logger.error(f"Invalid HuggingFace API token: {str(e)}")
-                self.huggingface_token = None
+        self.huggingface_token = huggingface_token
         
     def initialize(self, documents: List[Dict]):
         """Initialize the RAG system with processed documents."""
@@ -68,7 +51,7 @@ class RAGSystem:
                 test_response = self.llm("Hello")
                 logger.info("Language model initialized and tested successfully")
             else:
-                logger.error("Cannot initialize language model: No valid API token provided")
+                logger.error("Cannot initialize language model: No API token provided to RAGSystem")
         except Exception as e:
             logger.error(f"Error initializing language model: {str(e)}")
             self.llm = None
@@ -79,7 +62,7 @@ class RAGSystem:
             raise ValueError("RAG system not initialized. Please process documents first.")
         
         if not self.llm:
-            return "Error: Language model not initialized. Please check your HuggingFace API token."
+            return "Error: Language model not initialized. Check token provided during RAG system setup and logs."
         
         # Embed the question
         question_embedding = self.embedding_model.encode(question)
